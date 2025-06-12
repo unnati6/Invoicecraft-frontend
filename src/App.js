@@ -17,6 +17,14 @@ import ItemRepositoryPage from './page/item-repository/Itemrepository';
 import { RepositoryItemForm } from './components/RepositoryItemForm';
 import NewRepositoryItemPage from './page/item-repository/Newitemrepository/page';
 import EditRepositoryItemPage from './page/item-repository/Edititemrepository/page';
+import BrandingPage from './page/branding/Page';
+import TermsTemplatesPage from './page/templates/Terms & condtion/terms&condition';
+import { TermsTemplateForm } from './components/terms-template-form';
+import NewTermsTemplatePage from './page/templates/Terms & condtion/Newterms$condition/page';
+import EditTermsTemplatePage from './page/templates/Terms & condtion/Editterms&condition/page.';
+
+
+
 
 
 
@@ -40,6 +48,11 @@ function App() {
     <Route path='/itemrepository-form' element={<RepositoryItemForm />}/>
     <Route path='/Additemrepository' element={<NewRepositoryItemPage/>}/>
     <Route path='/item-repository/:id/edit' element={<EditRepositoryItemPage/>}/>
+    <Route path='/branding-numbering' element={<BrandingPage />}/>
+    <Route path='/term&condition' element={<TermsTemplatesPage />}/>
+    <Route path='/termtempate-form' element={<TermsTemplateForm />}/>
+    <Route path='/Addtermstemplate' element={<NewTermsTemplatePage />}/>
+    <Route path='/term&condtion/:id/edit' element={<EditTermsTemplatePage />}/>
     </Route>
     </Routes>
 </Router>

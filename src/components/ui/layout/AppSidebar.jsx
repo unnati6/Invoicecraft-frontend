@@ -59,8 +59,8 @@ export function AppSidebar() {
     label: "Branding & Templates",
     icon: BrandingIcon,
     items: [
-      { href: '/branding', label: 'Branding & Numbering', icon: BrandingIcon },
-      { href: '/templates/terms', label: 'T&C Templates', icon: ClipboardList },
+      { href: '/branding-numbering', label: 'Branding & Numbering', icon: BrandingIcon },
+      { href: '/term&condition', label: 'T&C Templates', icon: ClipboardList },
       { href: '/templates/msa', label: 'MSA Templates', icon: FileCheck2 },
       { href: '/templates/coverpages', label: 'Cover Pages', icon: BookCopy },
     ]
@@ -145,6 +145,7 @@ export function AppSidebar() {
               <SidebarMenu>
                 {brandingAndTemplatesGroup.items.map((item) => (
                   <SidebarMenuItem key={item.href}>
+                    
                     <SidebarMenuButton
                       asChild
                       isActive={isActive(item.href)}

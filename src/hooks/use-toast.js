@@ -22,6 +22,7 @@ const ToasterToast = {
   title: undefined, // React.ReactNode
   description: undefined, // React.ReactNode
   action: undefined, // ToastActionElement
+
   // Other properties from your Toast component's props (e.g., variant, duration)
 };
 
