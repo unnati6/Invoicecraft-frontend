@@ -7,6 +7,8 @@ import { useToast } from '../hooks/use-toast';
 import { useFormik } from 'formik';
 import axios from 'axios';
 import * as Yup from 'yup';
+import { BASE_URL } from '../lib/Api';
+
 
 export default function SignUpPage() {
   const { toast } = useToast();
@@ -38,22 +40,36 @@ export default function SignUpPage() {
     onSubmit: async (values, { setSubmitting, setStatus }) => {
       setStatus(null);
        try {
-    const response = await axios.post('http://localhost:5000/api/authentication/signup', {
+    const response = await axios.post(`${BASE_URL}/authentication/signup`, {
       fullName: values.fullName,
       email: values.email,
       password: values.password,
     });
-    console.log(response.data);
-    alert("Account created successfully! Please check your email for a verification link.");
+  //  console.log(response.data);
+    toast({
+      title: 'User Successfully Created',
+      description: 'Account created successfully! Please check your email for a verification link.',
+      duration: 180000,
+    })
     formik.resetForm();
   } catch (error) {
      const errorMessage =
       error.response?.data?.message || error.message || 'Signup failed. Please try again.';
 
     if (errorMessage.includes('User already registered') || errorMessage.includes('User already exists')) {
-      alert('An account with this email already exists.');
+     toast({
+      title: 'User already registered',
+      description: 'An account with this email already exists.',
+      variant: 'destructive',
+      duration: 180000,
+     })
     } else {
-      alert(errorMessage);
+       toast({
+        title: 'Unexpected Error',
+        description: `${errorMessage}`,
+        variant: 'destructive',
+        duration: 180000,
+      });  
     }
 
     setStatus(errorMessage);

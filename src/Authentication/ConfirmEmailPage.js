@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { CheckCircle, XCircle } from 'lucide-react';
-
+import { BASE_URL } from '../lib/Api';
 export default function ConfirmEmailPage() {
   const [searchParams] = useSearchParams();
   const [status, setStatus] = useState('loading'); // 'loading' | 'success' | 'error'
@@ -26,11 +26,11 @@ export default function ConfirmEmailPage() {
     }
 
     const confirmEmail = async () => {
-      // Mark that the API call is in progress
+ 
       hasCalledApi.current = true; 
 
       try {
-        const res = await fetch(`http://localhost:5000/api/authentication/confirm-email?token=${token}`);
+        const res = await fetch(`${BASE_URL}/confirm-email?token=${token}`);
         const data = await res.json();
 
         if (res.ok) {

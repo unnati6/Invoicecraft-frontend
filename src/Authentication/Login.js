@@ -8,10 +8,12 @@ import { useToast } from '../hooks/use-toast';
 import { useFormik } from 'formik';
 import { useNavigate } from 'react-router-dom';
 import * as Yup from 'yup';
+import { BASE_URL } from '../lib/Api';
 import axios from 'axios';
 export default function LoginPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  
     const formik = useFormik({
       initialValues: {
         email: '',
@@ -29,7 +31,7 @@ export default function LoginPage() {
       onSubmit: async (values, { setSubmitting, setStatus }) => {
         setStatus(null);
         try {
-    const response = await axios.post('http://localhost:5000/api/authentication/login', {
+    const response = await axios.post(`${BASE_URL}/authentication/login`, {
       email: values.email,
       password: values.password,
     });

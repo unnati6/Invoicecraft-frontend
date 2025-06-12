@@ -6,11 +6,12 @@ import { AppHeader } from '../../../components/ui/layout/app-header';
 import { RepositoryItemForm } from '../../../components/RepositoryItemForm';
 import { useToast } from '../../../hooks/use-toast';
 import axios from 'axios';
+import { BASE_URL } from '../../../lib/Api';
 
 // Example inline implementation of saveRepositoryItem (you can replace this logic as needed)
 async function saveRepositoryItem(data) {
   try {
-    const response = await axios.post('http://localhost:5000/api/item-route', data); // Replace URL if needed
+    const response = await axios.post(`${BASE_URL}/item-route`, data); // Replace URL if needed
     return response.data; // Axios returns the response data here
   } catch (error) {
     console.error('Error saving repository item:', error);

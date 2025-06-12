@@ -37,6 +37,7 @@ import {
 import { ScrollArea } from '../../components/ui/scroll-area';
 import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
+import { BASE_URL } from '../../lib/Api';
 const dummyItems = [
   {
     id: '1',
@@ -107,7 +108,7 @@ const navigate = useNavigate();
  const fetchItems = useCallback(async () => {
   setLoading(true);
   try {
-    const res = await axios.get('http://localhost:5000/api/item-route');
+    const res = await axios.get(`${BASE_URL}/item-route`);
     setRepositoryItems(res.data); // Axios response data
   } catch (error) {
     console.error("Failed to fetch item:", error);
@@ -126,7 +127,7 @@ const navigate = useNavigate();
   }, [fetchItems]);
 const handleDeleteItem = async (id) => {
   try {
-    await axios.delete(`http://localhost:5000/api/item-route/${id}`);
+    await axios.delete(`${BASE_URL}/item-route/${id}`);
     setRepositoryItems((prev) => prev.filter((item) => item.id !== id));
     toast({
       title: 'Success',

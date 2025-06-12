@@ -195,7 +195,7 @@ export function AppSidebar() {
       <SidebarFooter className="border-t p-2">
         <SidebarMenu>
           <SidebarMenuItem>
-            <Link to={isAdminRoute ? "/auth/admin/login" : "/login"}>
+            <Link to={isAdminRoute ? "/auth/admin/login" : "/"}>
               <SidebarMenuButton tooltip="Logout" className="justify-start w-full">
                 <LogOut className="h-5 w-5" />
                 <span>Logout</span>

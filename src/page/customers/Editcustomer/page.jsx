@@ -15,6 +15,7 @@ import { format } from 'date-fns';
 import { getCurrencySymbol } from '../../../lib/currency-utils';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import { BASE_URL } from '../../../lib/Api';
 
 export default function EditCustomerPage() {
   const navigate = useNavigate();
@@ -39,7 +40,7 @@ export default function EditCustomerPage() {
 async function loadCustomer() {
   setLoading(true);
   try {
-    const response = await axios.get(`http://localhost:5000/api/customers/${customerId}`);
+    const response = await axios.get(`${BASE_URL}/customers/${customerId}`);
     setCustomer(response.data); // assuming backend returns full customer object
   } catch (error) {
     toast({
@@ -75,7 +76,7 @@ async function loadCustomer() {
 
 const handleSubmit = async (data) => {
   try {
-    await axios.put(`http://localhost:5000/api/customers/${customerId}`, data);
+    await axios.put(`${BASE_URL}/customers/${customerId}`, data);
     toast({
       title: 'Success',
       description: 'Customer updated successfully.',

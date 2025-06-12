@@ -6,9 +6,10 @@ import { AppHeader } from '../../../components/ui/layout/app-header';
 import { CustomerForm } from '../../../components/Customer-form';
 import { useToast } from '../../../hooks/use-toast';
 import axios from 'axios';
+import { BASE_URL } from '../../../lib/Api';
 async function saveCustomer(data) {
   try {
-    const response = await axios.post('http://localhost:5000/api/customers', data); // Replace URL if needed
+    const response = await axios.post(`${BASE_URL}/customers`, data); // Replace URL if needed
     return response.data; // Axios returns the response data here
   } catch (error) {
     console.error('Error saving customer:', error);

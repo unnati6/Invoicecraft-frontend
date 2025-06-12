@@ -5,7 +5,7 @@ import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
-
+import { BASE_URL } from '../lib/Api';
 export default function Forgetpassword() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
@@ -21,7 +21,7 @@ export default function Forgetpassword() {
 
     try {
       // ACTUAL API CALL to your backend
-      const res = await fetch('http://localhost:5000/api/authentication/forgot-password', {
+      const res = await fetch(`${BASE_URL}/authentication/forgot-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

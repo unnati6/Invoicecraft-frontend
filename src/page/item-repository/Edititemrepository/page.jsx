@@ -6,8 +6,8 @@ import { useToast } from '../../../hooks/use-toast';
 import { Skeleton } from '../../../components/ui/skeleton';
 import { Card, CardContent, CardFooter, CardHeader } from '../../../components/ui/card';
 import axios from 'axios';
-
-const API_URL = 'http://localhost:5000/api/item-route';
+import { BASE_URL } from '../../../lib/Api';
+const API_URL = `${BASE_URL}/item-route`;
 
 const fetchRepositoryItemById = async (id) => {
   const response = await axios.get(`${API_URL}/${id}`);

@@ -10,15 +10,15 @@
   import { useNavigate } from 'react-router-dom';
   import { Link } from 'react-router-dom';
 import axios from 'axios';
-
+import { BASE_URL } from '../../lib/Api';
 const getAllCustomers = async () => {
-  const res = await fetch(`http://localhost:5000/api/customers`);
+  const res = await fetch(`${BASE_URL}/customers`);
   if (!res.ok) throw new Error("Failed to fetch customers");
   return res.json();
 };
 const removeCustomer = async (customerId) => {
   try {
-    const res = await axios.delete(`http://localhost:5000/api/customers/${customerId}`);
+    const res = await axios.delete(`${BASE_URL}/customers/${customerId}`);
 
     if (res.status === 409) {
       throw new Error(res.data?.error || 'Customer is linked with other records.');

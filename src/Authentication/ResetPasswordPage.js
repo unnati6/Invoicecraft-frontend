@@ -7,7 +7,7 @@ import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
-
+import { BASE_URL } from '../lib/Api';
 const passwordValidationSchema = Yup.object().shape({
   password: Yup.string()    
     .required('Password is required')
@@ -48,7 +48,7 @@ export default function ResetPasswordPage() {
       setLoading(true);
 
       try {
-        const res = await fetch('http://localhost:5000/api/authentication/reset-password', {
+        const res = await fetch(`${BASE_URL}/authentication/reset-password`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
