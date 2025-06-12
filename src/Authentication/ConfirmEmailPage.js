@@ -30,7 +30,7 @@ export default function ConfirmEmailPage() {
       hasCalledApi.current = true; 
 
       try {
-        const res = await fetch(`${BASE_URL}/confirm-email?token=${token}`);
+        const res = await fetch(`${BASE_URL}/authentication/confirm-email?token=${token}`);
         const data = await res.json();
 
         if (res.ok) {
