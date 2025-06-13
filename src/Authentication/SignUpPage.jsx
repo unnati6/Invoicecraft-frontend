@@ -49,7 +49,7 @@ export default function SignUpPage() {
     toast({
       title: 'User Successfully Created',
       description: 'Account created successfully! Please check your email for a verification link.',
-      duration: 180000,
+     
     })
     formik.resetForm();
   } catch (error) {
@@ -61,14 +61,14 @@ export default function SignUpPage() {
       title: 'User already registered',
       description: 'An account with this email already exists.',
       variant: 'destructive',
-      duration: 180000,
+      
      })
     } else {
        toast({
         title: 'Unexpected Error',
         description: `${errorMessage}`,
         variant: 'destructive',
-        duration: 180000,
+        
       });  
     }
 

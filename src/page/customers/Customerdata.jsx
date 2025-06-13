@@ -48,7 +48,7 @@ const handleDelete = async () => {
         title: "Deleted",
         description: `${customerName} was successfully deleted.`,
         variant: 'default',
-        duration: 180000,
+        
       });
       onDeleted(); // Refresh list
     }
@@ -57,7 +57,7 @@ const handleDelete = async () => {
       title: "Delete Failed",
       description: error.message || `Failed to delete ${customerName}.`,
       variant: 'destructive',
-        duration: 180000,
+        
     });
   }
 };

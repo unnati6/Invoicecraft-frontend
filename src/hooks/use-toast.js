@@ -1,22 +1,8 @@
-// src/hooks/use-toast.js (or .jsx)
 
 
 import * as React from "react";
-
-// Assuming 'toast' component is in '@/components/ui/toast'
-// We don't need to import its types in JS, but it's good to know where the props come from.
-// const ToastActionElement = any; // Placeholder for type awareness in JS
-// const ToastProps = any; // Placeholder for type awareness in JS
-
 const TOAST_LIMIT = 1;
-const TOAST_REMOVE_DELAY = 1000000; // This is a very long delay (1 million ms = 1000 seconds = ~16.6 minutes)
-
-// This represents the structure of a toast object.
-// In TS it was ToasterToast = ToastProps & { id: string; ... }
-// In JS, we just define the expected properties.
-// Note: 'open' is added dynamically when a toast is created.
-// 'onOpenChange' is also added dynamically.
-// You might want to review the actual props from your Toast component if there are discrepancies.
+const TOAST_REMOVE_DELAY = 3000; // This is a very long delay (1 million ms = 1000 seconds = ~16.6 minutes)
 const ToasterToast = {
   id: '',
   title: undefined, // React.ReactNode

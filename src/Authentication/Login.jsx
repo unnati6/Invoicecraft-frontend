@@ -39,7 +39,7 @@ export default function LoginPage() {
  toast({
       title: 'Login successful!',
       description: 'Redirecting to dashboard...',
-      duration: 180000, // 3 minutes
+     
     });
     navigate('/dashboard');
     // Optional: store token
@@ -58,7 +58,7 @@ export default function LoginPage() {
         title: 'Login Failed',
         description: message,
         variant: 'destructive',
-        duration: 180000,
+       
       });
     } else {
       setStatus('Unexpected error. Please try again later.');
@@ -66,7 +66,7 @@ export default function LoginPage() {
         title: 'Unexpected Error',
         description: 'Please try again later.',
         variant: 'destructive',
-        duration: 180000,
+        
       });  
       }
   } finally {

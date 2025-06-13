@@ -22,6 +22,14 @@ import TermsTemplatesPage from './page/templates/Terms & condtion/terms&conditio
 import { TermsTemplateForm } from './components/terms-template-form';
 import NewTermsTemplatePage from './page/templates/Terms & condtion/Newterms$condition/page';
 import EditTermsTemplatePage from './page/templates/Terms & condtion/Editterms&condition/page.';
+import CoverPageTemplatesPage from './page/templates/Coverpages/Coverpage';
+import { CoverPageTemplateForm } from './components/coverpage-template-form';
+import NewCoverPageTemplatePage from './page/templates/Coverpages/Newcoverpage/page';
+import EditCoverPageTemplatePage from './page/templates/Coverpages/Editcoverpage/page';
+import MsaTemplatesPage from './page/templates/Msa Templates/Msatemplates';
+import { MsaTemplateForm } from './components/msa-template-form';
+import NewMsaTemplatePage from './page/templates/Msa Templates/Newmsatemplate/page';
+import EditMsaTemplatePage from './page/templates/Msa Templates/Editmsatemplate/page';
 
 
 
@@ -53,6 +61,14 @@ function App() {
     <Route path='/termtempate-form' element={<TermsTemplateForm />}/>
     <Route path='/Addtermstemplate' element={<NewTermsTemplatePage />}/>
     <Route path='/term&condtion/:id/edit' element={<EditTermsTemplatePage />}/>
+    <Route path='/coverpage' element={<CoverPageTemplatesPage />}/>
+    <Route path='/coverpage-form' element={<CoverPageTemplateForm />}/>
+    <Route path='/Addcoverpage' element={<NewCoverPageTemplatePage />}/>
+    <Route path='/coverpage/:id/edit' element={<EditCoverPageTemplatePage />}/>
+    <Route path='/msatemplate' element={<MsaTemplatesPage />}/>
+    <Route path='/msatemplate-form' element={<MsaTemplateForm />}/>
+    <Route path='/Addmsatemplate' element={<NewMsaTemplatePage />}/> 
+    <Route path='/msatemp/:id/edit' element={<EditMsaTemplatePage />}/>
     </Route>
     </Routes>
 </Router>

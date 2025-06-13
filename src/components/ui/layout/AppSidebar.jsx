@@ -61,8 +61,8 @@ export function AppSidebar() {
     items: [
       { href: '/branding-numbering', label: 'Branding & Numbering', icon: BrandingIcon },
       { href: '/term&condition', label: 'T&C Templates', icon: ClipboardList },
-      { href: '/templates/msa', label: 'MSA Templates', icon: FileCheck2 },
-      { href: '/templates/coverpages', label: 'Cover Pages', icon: BookCopy },
+      { href: '/msatemplate', label: 'MSA Templates', icon: FileCheck2 },
+      { href: '/coverpage', label: 'Cover Pages', icon: BookCopy },
     ]
   };
 
