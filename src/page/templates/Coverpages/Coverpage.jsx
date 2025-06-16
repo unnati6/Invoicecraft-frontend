@@ -15,8 +15,8 @@ import { Skeleton } from '../../../components/ui/skeleton';
 import { format } from 'date-fns';  
 
 import { CoverPageTemplatePreviewDialog } from '../../../components/coverpage-template-preview-dialog';
-import axios from 'axios'; // Import axios for API calls
-import { BASE_URL } from '../../../lib/Api'; // Assuming BASE_URL is still defined here
+import axios from 'axios'; // Keep axios import for axios.isAxiosError
+import axiosInstance from '../../../lib/axiosInstance';// ✅ Import the configured axiosInstance
 
 export default function CoverPageTemplatesPage() {
   const navigate = useNavigate(); // Replaced useRouter
@@ -25,22 +25,32 @@ export default function CoverPageTemplatesPage() {
   const [templates, setTemplates] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
   const [viewMode, setViewMode] = React.useState('card');
-
-  // Function to fetch data from backend
   const fetchTemplates = React.useCallback(async () => {
     setLoading(true);
     try {
-      // Assuming your backend API for cover page templates is at /api/cover-page-templates
-      const response = await axios.get(`${BASE_URL}/cover-page-templates`);
-      setTemplates(response.data);
+      // ✅ Use axiosInstance for authenticated GET request
+      const response = await axiosInstance.get('/cover-page-templates');
+      setTemplates(response.data); // Axios automatically parses JSON to .data
     } catch (error) {
       console.error("Failed to fetch Cover Page templates:", error);
-      toast({ title: "Error", description: "Failed to fetch Cover Page templates.", variant: "destructive" });
+      let errorMessage = "Failed to fetch Cover Page templates.";
+      if (axios.isAxiosError(error)) {
+        errorMessage = error.response?.data?.message || error.message || errorMessage;
+      }
+      toast({ title: "Error", description: errorMessage, variant: "destructive" });
     } finally {
       setLoading(false);
     }
   }, [toast]); // Memoize fetchTemplates
-
+  React.useEffect(() => {
+    window.history.pushState(null, '', window.location.href);
+    window.onpopstate = () => {
+      const token = localStorage.getItem('supabase.auth.token');
+      if (!token) {
+        window.location.replace('/');
+      }
+    };
+  }, []);
   React.useEffect(() => {
     fetchTemplates();
   }, [fetchTemplates, location.pathname]); // Re-fetch when location.pathname changes (simulating Next.js pathname dependency)
@@ -48,16 +58,26 @@ export default function CoverPageTemplatesPage() {
   // Function to delete data from backend
   const handleDeleteTemplate = async (id) => {
     try {
-      // Assuming your backend API for deleting a template is DELETE /api/cover-page-templates/:id
-      await axios.delete(`${BASE_URL}/cover-page-templates/${id}`);
+      // ✅ Use axiosInstance for authenticated DELETE request
+      await axiosInstance.delete(`/cover-page-templates/${id}`);
       setTemplates(prev => prev.filter(t => t.id !== id));
       toast({ title: "Success", description: "Cover Page Template deleted successfully." });
     } catch (error) {
       console.error("Failed to delete template:", error);
-      toast({ title: "Error", description: "Failed to delete template.", variant: "destructive" });
+      let errorMessage = "Failed to delete template.";
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 404) {
+          errorMessage = 'Cover Page Template not found.';
+        } else if (error.response?.status === 409) {
+          errorMessage = error.response?.data?.error || 'Template is linked with other records.';
+        } else {
+          errorMessage = error.response?.data?.message || error.message || errorMessage;
+        }
+      }
+      toast({ title: "Error", description: errorMessage, variant: "destructive" });
     }
   };
-  
+
   const columns = [
     { accessorKey: 'name', header: 'Name', cell: (row) => row.name },
     { accessorKey: 'title', header: 'Cover Page Title', cell: (row) => row.title || 'N/A' },

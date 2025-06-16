@@ -14,8 +14,50 @@ import { CheckSquare, FileText, ExternalLink, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { getCurrencySymbol } from '../../../lib/currency-utils';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
-import { BASE_URL } from '../../../lib/Api';
+import axios from 'axios'; // Keep axios import for axios.isAxiosError
+import axiosInstance from '../../../lib/axiosInstance'; // ✅ Import the configured axiosInstance
+async function getCustomerById(customerId) {
+  try {
+    const response = await axiosInstance.get(`/customers/${customerId}`);
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 404) {
+      throw new Error("Customer not found.");
+    }
+    const errorMessage = error.response?.data?.message || error.message || "Failed to fetch customer details.";
+    console.error("Error fetching customer:", errorMessage, error.response);
+    throw new Error(errorMessage);
+  }
+}
+
+async function updateCustomerApi(customerId, data) {
+  try {
+    const response = await axiosInstance.put(`/customers/${customerId}`, data);
+    return response.data;
+  } catch (error) {
+    const errorMessage = error.response?.data?.message || error.message || "Failed to update customer.";
+    console.error("Error updating customer:", errorMessage, error.response);
+    throw new Error(errorMessage);
+  }
+}
+
+async function deleteCustomerApi(customerId) {
+  try {
+    await axiosInstance.delete(`/customers/${customerId}`);
+    return true; // Indicate success
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 409) {
+      throw new Error(error.response?.data?.error || 'Customer is linked with other records and cannot be deleted.');
+    }
+    if (axios.isAxiosError(error) && error.response?.status === 404) {
+      throw new Error('Customer not found for deletion.');
+    }
+    const errorMessage = error.response?.data?.message || error.message || "Failed to delete customer.";
+    console.error("Error deleting customer:", errorMessage, error.response);
+    throw new Error(errorMessage);
+  }
+}
+
 
 export default function EditCustomerPage() {
   const navigate = useNavigate();
@@ -30,30 +72,38 @@ export default function EditCustomerPage() {
   const [isLoadingInvoices, setIsLoadingInvoices] = useState(true);
   const [isMarkingPaid, setIsMarkingPaid] = useState(null);
   const [totalPaidByCustomer, setTotalPaidByCustomer] = useState(0);
-
+  useEffect(() => {
+    window.history.pushState(null, '', window.location.href);
+    window.onpopstate = () => {
+      const token = localStorage.getItem('supabase.auth.token');
+      if (!token) {
+        window.location.replace('/');
+      }
+    };
+  }, []);
   useEffect(() => {
     if (!customerId) {
       navigate('/customers');
       return;
     }
 
-async function loadCustomer() {
-  setLoading(true);
-  try {
-    const response = await axios.get(`${BASE_URL}/customers/${customerId}`);
-    setCustomer(response.data); // assuming backend returns full customer object
-  } catch (error) {
-    toast({
-      title: 'Error',
-      description: 'Failed to fetch customer details.',
-      variant: 'destructive',
-      duration: 3000,
-    });
-    navigate('/customers');
-  } finally {
-    setLoading(false);
-  }
-}
+    async function loadCustomer() {
+      setLoading(true);
+      try {
+        // ✅ Use the new API function
+        const data = await getCustomerById(customerId);
+        setCustomer(data);
+      } catch (error) {
+        toast({
+          title: 'Error',
+          description: error.message, // Use error.message from the API function
+          variant: 'destructive',
+        });
+        navigate('/customers'); // Navigate away on error
+      } finally {
+        setLoading(false);
+      }
+    }
     if (!isCustomerDeleted) loadCustomer();
   }, [customerId, navigate, toast, isCustomerDeleted]);
 
@@ -75,33 +125,44 @@ async function loadCustomer() {
   }, [customer, toast, isCustomerDeleted]);
 
 const handleSubmit = async (data) => {
-  try {
-    await axios.put(`${BASE_URL}/customers/${customerId}`, data);
-    toast({
-      title: 'Success',
-      description: 'Customer updated successfully.',
-      duration: 3000,
-    });
-    navigate('/customers');
-  } catch (error) {
-    toast({
-      title: 'Error',
-      description: 'Failed to update customer.',
-      variant: 'destructive',
-      duration: 3000,
-    });
-  }
-};
+    try {
+      // ✅ Use the new API function
+      await updateCustomerApi(customerId, data);
+      toast({
+        title: 'Success',
+        description: 'Customer updated successfully.',
+      });
+      navigate('/customers'); // Navigate back to customer list after update
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update customer.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  // Handle customer deletion
   const handleDeleteCustomer = async () => {
     if (!customer || isDeleting || isCustomerDeleted) return;
-    if (window.confirm(`Delete ${customer.name}?`)) {
-      setIsDeleting(true);
-      setIsCustomerDeleted(true);
-      setCustomer(null);
-      setCustomerInvoices([]);
-      setTotalPaidByCustomer(0);
-      toast({ title: 'Success', description: `${customer.name} deleted.` });
-      navigate('/customers');
+
+    setIsDeleting(true); // Set deleting state
+    try {
+      // ✅ Use the new API function for deletion
+      await deleteCustomerApi(customerId);
+      setIsCustomerDeleted(true); // Set local state for UI rendering
+      setCustomer(null); // Clear customer data
+      setCustomerInvoices([]); // Clear invoices
+      setTotalPaidByCustomer(0); // Reset total paid
+      toast({ title: 'Success', description: `${customer.name} deleted successfully.` });
+      navigate('/customers'); // Navigate to customer list
+    } catch (error) {
+      setIsDeleting(false); // Reset deleting state on error
+      toast({
+        title: 'Delete Failed',
+        description: error.message || `Failed to delete ${customer.name}.`,
+        variant: 'destructive',
+      });
     }
   };
 

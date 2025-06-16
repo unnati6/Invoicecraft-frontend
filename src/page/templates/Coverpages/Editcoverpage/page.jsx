@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import axios from 'axios';
 import { AppHeader } from '../../../../components/ui/layout/app-header';
 import { CoverPageTemplateForm } from '../../../../components/coverpage-template-form';
 import { useToast } from '../../../../hooks/use-toast';
 import { Skeleton } from '../../../../components/ui/skeleton';
 import { Card, CardContent, CardFooter, CardHeader } from '../../../../components/ui/card';
-import { BASE_URL } from '../../../../lib/Api';
+import axios from 'axios'; // Keep axios import for axios.isAxiosError
+import axiosInstance from '../../../../lib/axiosInstance'; // ✅ Import axiosInstance
+
 
 export default function EditCoverPageTemplatePage() {
   const navigate = useNavigate();
@@ -17,48 +18,75 @@ export default function EditCoverPageTemplatePage() {
   const [template, setTemplate] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
   useEffect(() => {
-    if (templateId) {
-      const fetchTemplate = async () => {
-        setLoading(true);
-        try {
-          const response = await axios.get(`${BASE_URL}/cover-page-templates/${templateId}`);
-          if (response.data) {
-            setTemplate(response.data);
-          } else {
-            toast({ title: 'Error', description: 'Cover Page Template not found.', variant: 'destructive' });
-            navigate('/templates/coverpages');
-          }
-        } catch (err) {
-          toast({ title: 'Error', description: 'Failed to fetch template.', variant: 'destructive' });
-        } finally {
-          setLoading(false);
-        }
-      };
-
-      fetchTemplate();
+    window.history.pushState(null, '', window.location.href);
+    window.onpopstate = () => {
+      const token = localStorage.getItem('supabase.auth.token');
+      if (!token) {
+        window.location.replace('/');
+      }
+    };
+  }, []);
+  useEffect(() => {
+    if (!templateId) { // Added check for templateId
+      navigate('/coverpage'); // Redirect if no ID
+      return;
     }
+
+    const fetchTemplate = async () => {
+      setLoading(true);
+      try {
+        // ✅ Use axiosInstance for authenticated GET request
+        const response = await axiosInstance.get(`/cover-page-templates/${templateId}`);
+        if (response.data) {
+          setTemplate(response.data);
+        } else {
+          // If data is null/undefined but no error, means template might not exist
+          toast({ title: 'Error', description: 'Cover Page Template not found.', variant: 'destructive' });
+          navigate('/coverpage');
+        }
+      } catch (error) { // Changed 'err' to 'error' for consistency
+        console.error('Failed to fetch template:', error);
+        let errorMessage = 'Failed to fetch template.';
+        if (axios.isAxiosError(error)) {
+          if (error.response?.status === 404) {
+            errorMessage = 'Cover Page Template not found or not accessible.';
+          } else {
+            errorMessage = error.response?.data?.message || error.response?.data?.error || error.message || errorMessage;
+          }
+        }
+        toast({ title: 'Error', description: errorMessage, variant: 'destructive' });
+        navigate('/coverpage'); // Navigate on error
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTemplate();
   }, [templateId, pathname, navigate, toast]);
 
   const handleSubmit = async (data) => {
     setIsSubmitting(true);
     try {
-      const response = await axios.put(`${BASE_URL}/cover-page-templates/${templateId}`, data);
+      // ✅ Use axiosInstance for authenticated PUT request
+      const response = await axiosInstance.put(`/cover-page-templates/${templateId}`, data);
       if (response.data) {
         toast({ title: 'Success', description: 'Template updated successfully.' });
         navigate('/coverpage');
       } else {
-        toast({ title: 'Error', description: 'Failed to update template.', variant: 'destructive' });
+        toast({ title: 'Error', description: 'Failed to update template. No valid data returned.', variant: 'destructive' });
       }
     } catch (error) {
       console.error('Update failed:', error);
-      toast({ title: 'Error', description: 'An unexpected error occurred.', variant: 'destructive' });
+      let errorMessage = 'An unexpected error occurred.';
+      if (axios.isAxiosError(error)) {
+        errorMessage = error.response?.data?.message || error.response?.data?.error || error.message || errorMessage;
+      }
+      toast({ title: 'Error', description: errorMessage, variant: 'destructive' });
     } finally {
       setIsSubmitting(false);
     }
   };
-
   if (loading) {
     return (
       <>

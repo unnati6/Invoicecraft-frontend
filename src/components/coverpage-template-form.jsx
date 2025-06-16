@@ -42,7 +42,15 @@ console.log({ useToast });
       additionalImage2Url: initialData?.additionalImage2Url || 'https://placehold.co/300x200.png',
     },
   });
-
+React.useEffect(() => {
+    window.history.pushState(null, '', window.location.href);
+    window.onpopstate = () => {
+      const token = localStorage.getItem('supabase.auth.token');
+      if (!token) {
+        window.location.replace('/');
+      }
+    };
+  }, []);
   const watchCompanyLogoEnabled = form.watch('companyLogoEnabled');
   const watchClientLogoEnabled = form.watch('clientLogoEnabled');
   const watchAdditionalImage1Enabled = form.watch('additionalImage1Enabled');

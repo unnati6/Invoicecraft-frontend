@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState,useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppHeader } from '../../../components/ui/layout/app-header';
 import { Button } from '../../../components/ui/button';
@@ -13,8 +13,8 @@ import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import { ScrollArea } from '../../../components/ui/scroll-area';
 import { TermsTemplatePreviewDialog } from '../../../components/terms-template-preview-dialog';
-import { BASE_URL } from '../../../lib/Api';
-// Replace with your actual backend URL
+import axios from 'axios'; // Keep axios import for axios.isAxiosError
+import axiosInstance from '../../../lib/axiosInstance'; // ✅ Import axiosInstance
 
 export default function TermsTemplatesPage() {
   const navigate = useNavigate();
@@ -22,36 +22,61 @@ export default function TermsTemplatesPage() {
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState('card');
-
-  useEffect(() => {
-    async function fetchData() {
-      setLoading(true);
-      try {
-        const res = await fetch(`${BASE_URL}/terms-templates`);
-        if (!res.ok) throw new Error('Fetch failed');
-        const data = await res.json();
-        setTemplates(data);
-      } catch (error) {
-        toast({ title: "Error", description: "Failed to fetch T&C templates.", variant: "destructive" });
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchData();
-  }, []);
-
-  const handleDeleteTemplate = async (id) => {
+  // Use useCallback for memoizing fetch function
+  const fetchData = useCallback(async () => {
+    setLoading(true);
     try {
-      const res = await fetch(`${BASE_URL}/terms-templates/${id}`, {
-        method: 'DELETE',
-      });
-      if (!res.ok) throw new Error('Delete failed');
+      // ✅ Use axiosInstance for authenticated GET request
+      const res = await axiosInstance.get(`/terms-templates`);
+      setTemplates(res.data || []); // Axios returns data in .data, add fallback to empty array
+    } catch (error) {
+      console.error('Fetch error:', error);
+      let errorMessage = "Failed to fetch T&C templates.";
+      if (axios.isAxiosError(error)) {
+        errorMessage = error.response?.data?.message || error.message || errorMessage;
+      }
+      toast({ title: "Error", description: errorMessage, variant: "destructive" });
+      setTemplates([]); // Ensure state is an array on error
+    } finally {
+      setLoading(false);
+    }
+  }, [toast]); // Dependencies for useCallback
+  useEffect(() => {
+    window.history.pushState(null, '', window.location.href);
+    window.onpopstate = () => {
+      const token = localStorage.getItem('supabase.auth.token');
+      if (!token) {
+        window.location.replace('/');
+      }
+    };
+  }, []);
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]); // Dependency array for useEffect
+
+  // Use useCallback for memoizing delete function
+  const handleDeleteTemplate = useCallback(async (id) => {
+    try {
+      // ✅ Use axiosInstance for authenticated DELETE request
+      await axiosInstance.delete(`/terms-templates/${id}`);
       setTemplates(prev => prev.filter(t => t.id !== id));
       toast({ title: "Success", description: "Template deleted successfully." });
     } catch (error) {
-      toast({ title: "Error", description: "Failed to delete template.", variant: "destructive" });
+      console.error('Delete failed:', error);
+      let errorMessage = "Failed to delete template.";
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 404) {
+          errorMessage = 'Terms & Conditions Template not found.';
+        } else if (error.response?.status === 409) {
+          errorMessage = error.response?.data?.error || 'Template is linked with other records.';
+        } else {
+          errorMessage = error.response?.data?.message || error.message || errorMessage;
+        }
+      }
+      toast({ title: "Error", description: errorMessage, variant: "destructive" });
     }
-  };
+  }, [toast]); // Dependencies for useCallback
+
 
   const isValidDate = (date) => {
     return date && !isNaN(new Date(date).getTime());

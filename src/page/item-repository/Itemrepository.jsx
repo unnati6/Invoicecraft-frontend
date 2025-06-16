@@ -37,29 +37,8 @@ import {
 import { ScrollArea } from '../../components/ui/scroll-area';
 import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
-import { BASE_URL } from '../../lib/Api';
-const dummyItems = [
-  {
-    id: '1',
-    name: 'Sample Item A',
-    customerName: 'ABC Corp',
-    defaultRate: 1200,
-    defaultProcurementPrice: 1000,
-    defaultVendorName: 'Vendor A',
-    currencyCode: 'USD',
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: '2',
-    name: 'Sample Item B',
-    customerName: null,
-    defaultRate: 800,
-    defaultProcurementPrice: 700,
-    defaultVendorName: 'Vendor B',
-    currencyCode: 'INR',
-    createdAt: new Date().toISOString(),
-  },
-];
+//import axios from 'axios'; // Keep axios import for axios.isAxiosError
+import axiosInstance from '../../lib/axiosInstance'; // Assuming this path is correct
  
 function RepositoryItemPreviewDialog({ item, trigger }) {
   const currencySymbol = getCurrencySymbol(item.currencyCode);
@@ -105,43 +84,72 @@ const navigate = useNavigate();
    const handleNavigate = React.useCallback((path) => {
       navigate(path);
     }, [navigate]);
- const fetchItems = useCallback(async () => {
-  setLoading(true);
-  try {
-    const res = await axios.get(`${BASE_URL}/item-route`);
-    setRepositoryItems(res.data); // Axios response data
-  } catch (error) {
-    console.error("Failed to fetch item:", error);
-    toast({
-      title: "Error",
-      description: "Unable to fetch repository items.",
-    });
-  } finally {
-    setLoading(false);
-  }
-}, [toast]);
 
+  // Fetch items from the backend
+  const fetchItems = useCallback(async () => {
+    setLoading(true);
+    try {
+      // ✅ Use axiosInstance for authenticated request
+      const res = await axiosInstance.get(`/item-route`);
+      setRepositoryItems(res.data); // Axios response data is directly in .data
+    } catch (error) {
+      console.error("Failed to fetch items:", error);
+      let errorMessage = "Unable to fetch repository items.";
+      if (axios.isAxiosError(error)) {
+        errorMessage = error.response?.data?.message || error.message || errorMessage;
+      }
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [toast]);
+  useEffect(() => {
+    window.history.pushState(null, '', window.location.href);
+    window.onpopstate = () => {
+      const token = localStorage.getItem('supabase.auth.token');
+      if (!token) {
+        window.location.replace('/');
+      }
+    };
+  }, []);
 
   useEffect(() => {
     fetchItems();
   }, [fetchItems]);
-const handleDeleteItem = async (id) => {
-  try {
-    await axios.delete(`${BASE_URL}/item-route/${id}`);
-    setRepositoryItems((prev) => prev.filter((item) => item.id !== id));
-    toast({
-      title: 'Success',
-      description: 'Repository item deleted.',
-    });
-  } catch (error) {
-    console.error('Delete failed:', error);
-    toast({
-      title: 'Error',
-      description: 'Failed to delete repository item.',
-      variant: 'destructive',
-    });
-  }
-};
+
+  // Handle item deletion
+  const handleDeleteItem = async (id) => {
+    try {
+      // ✅ Use axiosInstance for authenticated request
+      await axiosInstance.delete(`/item-route/${id}`);
+      setRepositoryItems((prev) => prev.filter((item) => item.id !== id));
+      toast({
+        title: 'Success',
+        description: 'Repository item deleted.',
+      });
+    } catch (error) {
+      console.error('Delete failed:', error);
+      let errorMessage = 'Failed to delete repository item.';
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 404) {
+          errorMessage = 'Repository item not found.';
+        } else if (error.response?.status === 409) {
+          errorMessage = error.response?.data?.error || 'Item is linked with other records.';
+        } else {
+          errorMessage = error.response?.data?.message || error.message || errorMessage;
+        }
+      }
+      toast({
+        title: 'Error',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+    }
+  };
   const filteredItems = useMemo(() => {
     if (!searchTerm.trim()) return repositoryItems;
     const lower = searchTerm.toLowerCase();

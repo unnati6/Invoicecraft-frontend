@@ -49,7 +49,7 @@ export function AppSidebar() {
   const mainMenuItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/customers', label: 'Customers', icon: Users },
-    { href: '/orderforms', label: 'Order Forms', icon: OrderFormIcon },
+    { href: '/order-forms', label: 'Order Forms', icon: OrderFormIcon },
     { href: '/invoices', label: 'Invoices', icon: FileText },
     { href: '/purchase-orders', label: 'Purchase Orders', icon: ShoppingCart },
     { href: '/item-repository', label: 'Item Repository', icon: Archive },

@@ -18,15 +18,17 @@ import { RichTextEditor } from './rich-text-editor';
 import { Save } from 'lucide-react';
 import { Skeleton } from './ui/skeleton';
 import { useToast } from '../hooks/use-toast';
-import { BASE_URL } from '../lib/Api';
+import axiosInstance from '../lib/axiosInstance';
 
 const NO_COVER_PAGE_VALUE = "_no_cover_page_";
 
-export function MsaTemplateForm({ onSubmit, initialData, isSubmitting = false }) {
-  const [coverPageTemplates, setCoverPageTemplates] = useState([]);
-  const [isLoadingCoverPageTemplates, setIsLoadingCoverPageTemplates] = useState(true);
-  const { toast } = useToast();
-
+export function MsaTemplateForm({
+  onSubmit,
+  initialData,
+  isSubmitting = false,
+  coverPageTemplates = [],
+  isLoadingCoverPageTemplates = false,
+}) {
   const form = useForm({
     defaultValues: {
       name: initialData?.name || '',
@@ -36,31 +38,20 @@ export function MsaTemplateForm({ onSubmit, initialData, isSubmitting = false })
   });
 
   useEffect(() => {
-    async function loadCoverPageTemplates() {
-      setIsLoadingCoverPageTemplates(true);
-      try {
-        const res = await fetch(`${BASE_URL}/cover-page-templates`);
-        const data = await res.json();
-        setCoverPageTemplates(data);
-      } catch (error) {
-        console.error("Failed to load cover page templates", error);
-        toast({
-          title: "Error",
-          description: "Could not load cover page templates.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoadingCoverPageTemplates(false);
-      }
+    if (initialData) {
+      form.reset({
+        name: initialData.name || '',
+        content: initialData.content || '<p></p>',
+        coverPageTemplateId: initialData.coverPageTemplateId || NO_COVER_PAGE_VALUE,
+      });
     }
-    loadCoverPageTemplates();
-  }, [toast]);
+  }, [initialData, form]);
 
   const handleFormSubmit = async (data) => {
     const dataToSubmit = {
       ...data,
       coverPageTemplateId:
-        data.coverPageTemplateId === NO_COVER_PAGE_VALUE ? '' : data.coverPageTemplateId,
+        data.coverPageTemplateId === NO_COVER_PAGE_VALUE ? null : data.coverPageTemplateId,
     };
     onSubmit(dataToSubmit);
   };

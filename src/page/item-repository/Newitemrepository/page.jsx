@@ -1,28 +1,42 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState , useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppHeader } from '../../../components/ui/layout/app-header';
 import { RepositoryItemForm } from '../../../components/RepositoryItemForm';
 import { useToast } from '../../../hooks/use-toast';
 import axios from 'axios';
-import { BASE_URL } from '../../../lib/Api';
-
-// Example inline implementation of saveRepositoryItem (you can replace this logic as needed)
+import axiosInstance from '../../../lib/axiosInstance';
 async function saveRepositoryItem(data) {
   try {
-    const response = await axios.post(`${BASE_URL}/item-route`, data); // Replace URL if needed
+    // ✅ Use axiosInstance instead of raw axios and BASE_URL
+    const response = await axiosInstance.post('/item-route', data);
     return response.data; // Axios returns the response data here
   } catch (error) {
     console.error('Error saving repository item:', error);
-    throw error; // rethrow to be caught in handleSubmit
+    // Rethrow to be caught in handleSubmit with more detailed error
+    if (axios.isAxiosError(error)) {
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Failed to save repository item.';
+      throw new Error(errorMessage);
+    }
+    throw new Error('An unexpected error occurred while saving the item.');
   }
 }
+
 
 export default function NewRepositoryItemPage() {
  const navigate = useNavigate();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+    useEffect(() => {
+      window.history.pushState(null, '', window.location.href);
+      window.onpopstate = () => {
+        const token = localStorage.getItem('supabase.auth.token');
+        if (!token) {
+          window.location.replace('/');
+        }
+      };
+    }, []);
 
   const handleSubmit = async (data) => {
     setIsSubmitting(true);

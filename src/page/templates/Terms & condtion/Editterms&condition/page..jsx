@@ -5,31 +5,40 @@ import { TermsTemplateForm } from '../../../../components/terms-template-form';
 import { useToast } from '../../../../hooks/use-toast';
 import { Skeleton } from '../../../../components/ui/skeleton';
 import { Card, CardContent, CardFooter, CardHeader } from '../../../../components/ui/card';
-import { BASE_URL } from '../../../../lib/Api';
-// API CALLS (Replace with actual endpoints)
+import axios from 'axios'; // Keep axios import for axios.isAxiosError
+import axiosInstance from '../../../../lib/axiosInstance'; // ✅ Import axiosInstance
 const fetchTermsTemplateById = async (id) => {
   try {
-    const res = await fetch(`${BASE_URL}/terms-templates/${id}`);
-    if (!res.ok) throw new Error('Failed to fetch');
-    return await res.json();
+    const response = await axiosInstance.get(`/terms-templates/${id}`);
+    return response.data;
   } catch (error) {
     console.error('Fetch Error:', error);
-    return null;
+    let errorMessage = 'Failed to fetch T&C template.';
+    if (axios.isAxiosError(error)) {
+      if (error.response?.status === 404) {
+        errorMessage = 'T&C Template not found.';
+      } else {
+        errorMessage = error.response?.data?.message || error.message || errorMessage;
+      }
+    }
+    throw new Error(errorMessage); // Re-throw with user-friendly message
   }
 };
 
 const saveTermsTemplate = async (data, id) => {
   try {
-    const res = await fetch(`${BASE_URL}/terms-templates/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    if (!res.ok) throw new Error('Failed to update');
-    return await res.json();
+    const response = await axiosInstance.put(`/terms-templates/${id}`, data);
+    return response.data;
   } catch (error) {
     console.error('Save Error:', error);
-    return null;
+    let errorMessage = 'Failed to update T&C template.';
+    if (axios.isAxiosError(error)) {
+      errorMessage = error.response?.data?.message || error.message || errorMessage;
+      if (error.response?.status === 409) {
+        errorMessage = "A Terms & Conditions template with this name might already exist.";
+      }
+    }
+    throw new Error(errorMessage); // Re-throw with user-friendly message
   }
 };
 
@@ -42,7 +51,15 @@ export default function EditTermsTemplatePage() {
   const [template, setTemplate] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  useEffect(() => {
+    window.history.pushState(null, '', window.location.href);
+    window.onpopstate = () => {
+      const token = localStorage.getItem('supabase.auth.token');
+      if (!token) {
+        window.location.replace('/');
+      }
+    };
+  }, []);
   useEffect(() => {
     if (templateId) {
       const loadTemplate = async () => {

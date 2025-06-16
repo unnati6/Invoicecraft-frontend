@@ -36,46 +36,47 @@ export default function LoginPage() {
       password: values.password,
     });
  const data = response.data;
- toast({
-      title: 'Login successful!',
-      description: 'Redirecting to dashboard...',
-     
-    });
-    navigate('/dashboard');
-    // Optional: store token
-    // localStorage.setItem('accessToken', data.accessToken);
+  if (data.token) {
+          localStorage.setItem('supabase_access_token', data.token);
+          // आप यहां से उपयोगकर्ता ID भी स्टोर करना चाहेंगे, यदि आपके backend response में 'user.id' है
+          if (data.user && data.user.id) {
+            localStorage.setItem('user_id', data.user.id);
+          }
+          toast({
+            title: 'Login successful!',
+            description: 'Redirecting to dashboard...',
+          });
+          navigate('/dashboard'); // लॉगिन सफल होने पर डैशबोर्ड पर रीडायरेक्ट करें
+        } else {
+          // यदि टोकन प्रतिक्रिया में नहीं है, तो कुछ गलत है
+          throw new Error('Authentication token not received.');
+        }
 
-    // Optional: redirect user
-    // window.location.href = '/dashboard';
+      } catch (error) {
+        console.error('Login error:', error);
 
-  } catch (error) {
-    console.error('Login error:', error);
-
-    if (axios.isAxiosError(error)) {
-      const message = error.response?.data?.message || 'Login failed. Please check your credentials.';
-      setStatus(message);
-       toast({
-        title: 'Login Failed',
-        description: message,
-        variant: 'destructive',
-       
-      });
-    } else {
-      setStatus('Unexpected error. Please try again later.');
-      toast({
-        title: 'Unexpected Error',
-        description: 'Please try again later.',
-        variant: 'destructive',
-        
-      });  
+        if (axios.isAxiosError(error)) {
+          const message = error.response?.data?.message || 'Login failed. Please check your credentials.';
+          setStatus(message);
+          toast({
+            title: 'Login Failed',
+            description: message,
+            variant: 'destructive',
+          });
+        } else {
+          setStatus('Unexpected error. Please try again later.');
+          toast({
+            title: 'Unexpected Error',
+            description: 'Please try again later.',
+            variant: 'destructive',
+          });
+        }
+      } finally {
+        setSubmitting(false); // फॉर्म सबमिट होने के बाद सबमिटिंग स्थिति रीसेट करें
       }
-  } finally {
-    setSubmitting(false);
-  }
-}
-    });
-  
-    return (
+    }
+  });
+     return (
       <div className="flex min-h-screen w-full items-center justify-center animated-gradient-background p-4">
         <div className="w-full max-w-sm">
           <div className="mb-8 flex w-full justify-center">

@@ -6,17 +6,39 @@ import { useToast } from '../../../hooks/use-toast';
 import { Skeleton } from '../../../components/ui/skeleton';
 import { Card, CardContent, CardFooter, CardHeader } from '../../../components/ui/card';
 import axios from 'axios';
-import { BASE_URL } from '../../../lib/Api';
-const API_URL = `${BASE_URL}/item-route`;
+import axiosInstance from '../../../lib/axiosInstance';
 
 const fetchRepositoryItemById = async (id) => {
-  const response = await axios.get(`${API_URL}/${id}`);
-  return response.data;
+  try {
+    // ✅ Use axiosInstance for authenticated GET request
+    const response = await axiosInstance.get(`/item-route/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching repository item:', error);
+    if (axios.isAxiosError(error)) {
+      if (error.response?.status === 404) {
+        throw new Error('Repository Item not found.');
+      }
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Failed to fetch repository item details.';
+      throw new Error(errorMessage);
+    }
+    throw new Error('An unexpected error occurred while fetching the item.');
+  }
 };
 
 const saveRepositoryItem = async (data, id) => {
-  const response = await axios.put(`${API_URL}/${id}`, data);
-  return response.data;
+  try {
+    // ✅ Use axiosInstance for authenticated PUT request
+    const response = await axiosInstance.put(`/item-route/${id}`, data);
+    return response.data;
+  } catch (error) {
+    console.error('Error saving repository item:', error);
+    if (axios.isAxiosError(error)) {
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Failed to update repository item.';
+      throw new Error(errorMessage);
+    }
+    throw new Error('An unexpected error occurred while saving the item.');
+  }
 };
 
 export default function EditRepositoryItemPage() {
@@ -59,7 +81,15 @@ export default function EditRepositoryItemPage() {
       loadItem();
     }
   }, [itemId, navigate, toast, location.pathname]);
-
+    useEffect(() => {
+      window.history.pushState(null, '', window.location.href);
+      window.onpopstate = () => {
+        const token = localStorage.getItem('supabase.auth.token');
+        if (!token) {
+          window.location.replace('/');
+        }
+      };
+    }, []);
   const handleSubmit = async (data) => {
     setIsSubmitting(true);
     try {

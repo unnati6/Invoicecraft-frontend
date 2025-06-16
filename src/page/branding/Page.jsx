@@ -12,8 +12,9 @@ import { SignaturePad } from '../../components/signature-pad';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormMessage, FormLabel } from '../../components/ui/form';
 import { Skeleton } from '../../components/ui/skeleton';
 import { useForm } from 'react-hook-form';
-import axios from 'axios';
-import { BASE_URL } from '../../lib/Api';
+import axios from 'axios'; // Keep axios import for axios.isAxiosError
+import axiosInstance from '../../lib/axiosInstance'; // ✅ Import the configured axiosInstance
+
 
 export default function BrandingPage() {
   const { toast } = useToast();
@@ -42,13 +43,22 @@ export default function BrandingPage() {
       signatureUrl: null, // This will hold the URL for preview/display
     },
   });
-
+useEffect(() => {
+    window.history.pushState(null, '', window.location.href);
+    window.onpopstate = () => {
+      const token = localStorage.getItem('supabase.auth.token');
+      if (!token) {
+        window.location.replace('/');
+      }
+    };
+  }, []);
   useEffect(() => {
     async function loadSettings() {
       setIsLoading(true);
       try {
-        const response = await fetch(`${BASE_URL}/branding-settings`);
-        const settings = await response.json();
+        // ✅ Use axiosInstance for authenticated GET request
+        const response = await axiosInstance.get('/branding-settings');
+        const settings = response.data; // Axios automatically parses JSON to .data
         if (settings) {
           form.reset({
             ...settings,
@@ -63,13 +73,18 @@ export default function BrandingPage() {
         }
       } catch (error) {
         console.error("Failed to load branding settings:", error);
-        toast({ title: "Error", description: "Could not load branding settings. Using defaults.", variant: "destructive" });
+        let errorMessage = "Could not load branding settings. Using defaults.";
+        if (axios.isAxiosError(error)) {
+          errorMessage = error.response?.data?.message || error.message || errorMessage;
+        }
+        toast({ title: "Error", description: errorMessage, variant: "destructive" });
       } finally {
         setIsLoading(false);
       }
     }
     loadSettings();
   }, [form, toast]);
+
 
   const handleLogoFileChange = (event) => {
     const file = event.target.files?.[0];
@@ -179,41 +194,27 @@ export default function BrandingPage() {
         }
       });
 
-      // Conditionally append logo file
+      // Conditionally append logo file or deletion flag
       if (logoFile) {
-        formData.append('logoFile', logoFile); // Backend expects 'logoFile' based on Postman
-      } else if (data.logoUrl === null) {
-        // If logoUrl is explicitly null, it means the user cleared it.
-        // Send a flag to the backend to indicate deletion.
-        formData.append('logoFile', ''); // Send empty string for deletion, or a specific flag
+        formData.append('logoFile', logoFile); // Send the new file
+      } else if (data.logoUrl === null && form.formState.dirtyFields.logoUrl) {
+        // Only send 'null_logo' if logoUrl was explicitly cleared by user
+        formData.append('logoFile', 'null_logo');
       }
 
-      // Conditionally append signature file
+      // Conditionally append signature file or deletion flag
       if (signatureFile) {
-        formData.append('signatureFile', signatureFile); // Backend expects 'signatureFile'
-      } else if (data.signatureUrl === null) {
-        // If signatureUrl is explicitly null, it means the user cleared it.
-        formData.append('signatureFile', ''); // Send empty string for deletion, or a specific flag
+        formData.append('signatureFile', signatureFile); // Send the new file
+      } else if (data.signatureUrl === null && form.formState.dirtyFields.signatureUrl) {
+        // Only send 'null_signature' if signatureUrl was explicitly cleared by user
+        formData.append('signatureFile', 'null_signature');
       }
 
-      // If existing logo/signature URLs are present and no new file is uploaded/drawn,
-      // you might want to send the existing URLs separately or rely on backend to retain them
-      // based on absence of new file data. For now, we assume if logoFile/signatureFile is null,
-      // the backend keeps the existing one UNLESS data.logoUrl/signatureUrl is explicitly null (cleared).
+      // ✅ Use axiosInstance for authenticated PUT request with FormData
+      // Axios handles 'Content-Type': 'multipart/form-data' automatically for FormData
+      const response = await axiosInstance.put('/branding-settings', formData);
 
-      const response = await fetch(`${BASE_URL}/branding-settings`, {
-        method: 'PUT',
-        // DO NOT set 'Content-Type': 'multipart/form-data'. The browser will set it
-        // automatically and correctly with the boundary when you provide a FormData object.
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to save branding settings');
-      }
-
-      const updatedSettings = await response.json(); // Assuming your backend returns updated settings
+      const updatedSettings = response.data; // Axios returns data in .data
       toast({ title: 'Success', description: 'Branding settings saved.' });
       // Reset form with potentially new URLs from the backend after successful upload
       form.reset({
@@ -226,10 +227,13 @@ export default function BrandingPage() {
       setSignatureFile(null);
       setIsSignatureDrawn(false);
 
-
     } catch (error) {
       console.error("Failed to save branding settings:", error);
-      toast({ title: 'Error', description: error.message || 'Could not save branding settings.', variant: 'destructive' });
+      let errorMessage = 'Could not save branding settings.';
+      if (axios.isAxiosError(error)) {
+        errorMessage = error.response?.data?.message || error.response?.data?.error || errorMessage;
+      }
+      toast({ title: 'Error', description: errorMessage, variant: 'destructive' });
     }
   };
 

@@ -30,12 +30,9 @@ import MsaTemplatesPage from './page/templates/Msa Templates/Msatemplates';
 import { MsaTemplateForm } from './components/msa-template-form';
 import NewMsaTemplatePage from './page/templates/Msa Templates/Newmsatemplate/page';
 import EditMsaTemplatePage from './page/templates/Msa Templates/Editmsatemplate/page';
-
-
-
-
-
-
+import { LogoutButton } from './Authentication/Logout';
+import ProtectedRoute from './lib/ProtectedRoute';
+import OrderFormsPage from './page/order-forms/Orderform';
 function App() {
   return (
 <>
@@ -46,29 +43,31 @@ function App() {
     <Route path='/forget' element={<Forgetpassword />}/>
     <Route path='/confirm-email' element={<ConfirmEmailPage />}/>
     <Route path='/reset-password' element={<ResetPasswordPage />}/>
+    <Route path='/logout' element={<LogoutButton />}/>
     <Route element={<AppLayout />}>
-    <Route path='/dashboard' element={<DashboardPage />}/>
-    <Route path='/customer-form' element={<CustomerForm />}/>
-    <Route path='/Addcustomer' element={<NewCustomerPage />}/>
-    <Route path='/customers' element={<CustomersPage />}/>
-    <Route path='/customers/:id/edit' element={<EditCustomerPage />}/>
-    <Route path='/item-repository' element={<ItemRepositoryPage/>}/>
-    <Route path='/itemrepository-form' element={<RepositoryItemForm />}/>
-    <Route path='/Additemrepository' element={<NewRepositoryItemPage/>}/>
-    <Route path='/item-repository/:id/edit' element={<EditRepositoryItemPage/>}/>
-    <Route path='/branding-numbering' element={<BrandingPage />}/>
-    <Route path='/term&condition' element={<TermsTemplatesPage />}/>
-    <Route path='/termtempate-form' element={<TermsTemplateForm />}/>
-    <Route path='/Addtermstemplate' element={<NewTermsTemplatePage />}/>
-    <Route path='/term&condtion/:id/edit' element={<EditTermsTemplatePage />}/>
-    <Route path='/coverpage' element={<CoverPageTemplatesPage />}/>
-    <Route path='/coverpage-form' element={<CoverPageTemplateForm />}/>
-    <Route path='/Addcoverpage' element={<NewCoverPageTemplatePage />}/>
-    <Route path='/coverpage/:id/edit' element={<EditCoverPageTemplatePage />}/>
-    <Route path='/msatemplate' element={<MsaTemplatesPage />}/>
-    <Route path='/msatemplate-form' element={<MsaTemplateForm />}/>
-    <Route path='/Addmsatemplate' element={<NewMsaTemplatePage />}/> 
-    <Route path='/msatemp/:id/edit' element={<EditMsaTemplatePage />}/>
+    <Route path='/dashboard' element={<ProtectedRoute><DashboardPage /></ProtectedRoute>}/>
+    <Route path='/customer-form' element={<ProtectedRoute><CustomerForm /></ProtectedRoute>}/>
+    <Route path='/Addcustomer' element={<ProtectedRoute><NewCustomerPage /></ProtectedRoute>}/>
+    <Route path='/customers' element={<ProtectedRoute><CustomersPage /></ProtectedRoute>}/>
+    <Route path='/customers/:id/edit' element={<ProtectedRoute><EditCustomerPage /></ProtectedRoute>}/>
+    <Route path='/item-repository' element={<ProtectedRoute><ItemRepositoryPage/></ProtectedRoute>}/>
+    <Route path='/itemrepository-form' element={<ProtectedRoute><RepositoryItemForm /></ProtectedRoute>}/>
+    <Route path='/Additemrepository' element={<ProtectedRoute><NewRepositoryItemPage/></ProtectedRoute>}/>
+    <Route path='/item-repository/:id/edit' element={<ProtectedRoute><EditRepositoryItemPage/></ProtectedRoute>}/>
+    <Route path='/branding-numbering' element={<ProtectedRoute><BrandingPage /></ProtectedRoute>}/>
+    <Route path='/term&condition' element={<ProtectedRoute><TermsTemplatesPage /></ProtectedRoute>}/>
+    <Route path='/termtempate-form' element={<ProtectedRoute><TermsTemplateForm /></ProtectedRoute>}/>
+    <Route path='/Addtermstemplate' element={<ProtectedRoute><NewTermsTemplatePage /></ProtectedRoute>}/>
+    <Route path='/term&condtion/:id/edit' element={<ProtectedRoute><EditTermsTemplatePage /></ProtectedRoute>}/>
+    <Route path='/coverpage' element={<ProtectedRoute><CoverPageTemplatesPage /></ProtectedRoute>}/>
+    <Route path='/coverpage-form' element={<ProtectedRoute><CoverPageTemplateForm /></ProtectedRoute>}/>
+    <Route path='/Addcoverpage' element={<ProtectedRoute><NewCoverPageTemplatePage /></ProtectedRoute>}/>
+    <Route path='/coverpage/:id/edit' element={<ProtectedRoute><EditCoverPageTemplatePage /></ProtectedRoute>}/>
+    <Route path='/msatemplate' element={<ProtectedRoute><MsaTemplatesPage /></ProtectedRoute>}/>
+    <Route path='/msatemplate-form' element={<ProtectedRoute><MsaTemplateForm /></ProtectedRoute>}/>
+    <Route path='/Addmsatemplate' element={<ProtectedRoute><NewMsaTemplatePage /></ProtectedRoute>}/> 
+    <Route path='/msatemp/:id/edit' element={<ProtectedRoute><EditMsaTemplatePage /></ProtectedRoute>}/>
+    <Route path='/order-forms'element={<ProtectedRoute><OrderFormsPage /></ProtectedRoute>}/>
     </Route>
     </Routes>
 </Router>

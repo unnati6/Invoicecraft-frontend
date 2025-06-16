@@ -50,7 +50,16 @@ export default function DashboardPage() {
   const [currencyBreakdown, setCurrencyBreakdown] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
   const navigate = useNavigate(); // यदि आप नेविगेशन के लिए इनका उपयोग नहीं कर रहे हैं, तो handleLogout/handleCustomer फ़ंक्शंस के साथ इन्हें हटा दें
-
+React.useEffect(() => {
+  // Prevent back caching
+  window.history.pushState(null, '', window.location.href);
+  window.onpopstate = function () {
+    const token = localStorage.getItem('supabase.auth.token');
+    if (!token) {
+      window.location.replace('/');
+    }
+  };
+}, []);
   React.useEffect(() => {
     async function fetchData() {
       setLoading(true);
