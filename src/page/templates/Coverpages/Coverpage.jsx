@@ -14,6 +14,7 @@ import { useToast } from '../../../hooks/use-toast';
 import { Skeleton } from '../../../components/ui/skeleton';
 import { format } from 'date-fns';  
 
+
 import { CoverPageTemplatePreviewDialog } from '../../../components/coverpage-template-preview-dialog';
 import axios from 'axios'; // Keep axios import for axios.isAxiosError
 import axiosInstance from '../../../lib/axiosInstance';// ✅ Import the configured axiosInstance
@@ -25,6 +26,7 @@ export default function CoverPageTemplatesPage() {
   const [templates, setTemplates] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
   const [viewMode, setViewMode] = React.useState('card');
+  const BASE_URL = 'https://invoicecraft-backend.onrender.com';
   const fetchTemplates = React.useCallback(async () => {
     setLoading(true);
     try {
@@ -42,15 +44,15 @@ export default function CoverPageTemplatesPage() {
       setLoading(false);
     }
   }, [toast]); // Memoize fetchTemplates
-  React.useEffect(() => {
-    window.history.pushState(null, '', window.location.href);
-    window.onpopstate = () => {
-      const token = localStorage.getItem('supabase.auth.token');
-      if (!token) {
-        window.location.replace('/');
-      }
-    };
-  }, []);
+  // React.useEffect(() => {
+  //   window.history.pushState(null, '', window.location.href);
+  //   window.onpopstate = () => {
+  //     const token = localStorage.getItem('supabase.auth.token');
+  //     if (!token) {
+  //       window.location.replace('/');
+  //     }
+  //   };
+  // }, []);
   React.useEffect(() => {
     fetchTemplates();
   }, [fetchTemplates, location.pathname]); // Re-fetch when location.pathname changes (simulating Next.js pathname dependency)
@@ -180,8 +182,8 @@ export default function CoverPageTemplatesPage() {
                     <CardContent className="flex-grow space-y-2">
                       <p className="text-sm text-muted-foreground">Title: <span className="font-medium text-foreground">{template.title || "N/A"}</span></p>
                       <div className="flex flex-wrap gap-2 items-center">
-                        {template.companyLogoEnabled && template.companyLogoUrl && (<img src={template.companyLogoUrl} alt="Company Logo" width={60} height={20} className="object-contain border rounded-sm p-0.5 bg-muted/30" data-ai-hint="company logo"/>)}
-                        {template.clientLogoEnabled && template.clientLogoUrl && (<img src={template.clientLogoUrl} alt="Client Logo" width={50} height={18} className="object-contain border rounded-sm p-0.5 bg-muted/30" data-ai-hint="client logo"/>)}
+                        {template.companyLogoEnabled && template.companyLogoUrl && (<img src={`${BASE_URL}${template.companyLogoUrl}`} alt="Company Logo" width={60} height={20} className="object-contain border rounded-sm p-0.5 bg-muted/30" data-ai-hint="company logo"/>)}
+                        {template.clientLogoEnabled && template.clientLogoUrl && (<img src={`${BASE_URL}${template.clientLogoUrl}`} alt="Client Logo" width={50} height={18} className="object-contain border rounded-sm p-0.5 bg-muted/30" data-ai-hint="client logo"/>)}
                       </div>
                       {(template.additionalImage1Enabled || template.additionalImage2Enabled) && (
                         <p className="text-xs text-muted-foreground pt-1">

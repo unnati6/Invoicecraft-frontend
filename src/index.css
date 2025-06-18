@@ -183,3 +183,14 @@ body {
 }
 
 
+/* Reset DayPicker default colors */
+.rdp-day_selected {
+  background-color: transparent !important;
+  color: inherit !important;
+}
+
+.rdp-day_today {
+  border: none !important;
+  font-weight: inherit !important;
+  color: inherit !important;
+}

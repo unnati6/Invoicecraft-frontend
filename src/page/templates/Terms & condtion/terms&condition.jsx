@@ -189,7 +189,7 @@ export default function TermsTemplatesPage() {
             <FileText className="w-16 h-16 text-muted-foreground mb-4" />
             <h2 className="text-xl font-semibold mb-2">No Templates Yet</h2>
             <p className="text-muted-foreground mb-4">Get started by creating your first reusable terms and conditions template.</p>
-            <Button onClick={() => navigate('/templates/terms/new')}>
+            <Button onClick={() => navigate('/Addtermstemplate')}>
               <PlusCircle className="mr-2 h-4 w-4" /> Create Your First Template
             </Button>
           </div>

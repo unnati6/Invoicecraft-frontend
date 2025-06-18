@@ -13,15 +13,15 @@ export default function NewCoverPageTemplatePage() {
   const navigate = useNavigate(); // Replaced useRouter with useNavigate
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  React.useEffect(() => {
-    window.history.pushState(null, '', window.location.href);
-    window.onpopstate = () => {
-      const token = localStorage.getItem('supabase.auth.token');
-      if (!token) {
-        window.location.replace('/');
-      }
-    };
-  }, []);
+  // React.useEffect(() => {
+  //   window.history.pushState(null, '', window.location.href);
+  //   window.onpopstate = () => {
+  //     const token = localStorage.getItem('supabase.auth.token');
+  //     if (!token) {
+  //       window.location.replace('/');
+  //     }
+  //   };
+  // }, []);
   // The 'data' parameter will now be a plain JavaScript object from the form fields.
  const handleSubmit = async (data) => { // Removed type annotation for data
     setIsSubmitting(true);

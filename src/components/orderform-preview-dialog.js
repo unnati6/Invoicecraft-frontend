@@ -30,7 +30,7 @@ async function fetchCustomerByIdApi(id) {
   }
 }
 
-export function OrderFormPreviewDialog({ orderFormId, trigger, companyBranding }) {
+export function OrderFormPreviewDialog({ orderFormId, trigger, companyBranding,coverPageTemplate }) {
   const { toast } = useToast();
   const [orderForm, setOrderForm] = useState(null);
   const [customer, setCustomer] = useState(null);
@@ -113,6 +113,7 @@ export function OrderFormPreviewDialog({ orderFormId, trigger, companyBranding }
             document={orderForm}
             customer={customer}
             companyBranding={companyBranding}
+            coverPageTemplate={coverPageTemplate}
             // coverPageTemplate prop if applicable, you might need to fetch this here too
           />
         ) : ( // Fallback if orderForm is null/undefined after loading completes without explicit error
@@ -126,3 +127,4 @@ export function OrderFormPreviewDialog({ orderFormId, trigger, companyBranding }
     </Dialog>
   );
 }
+    

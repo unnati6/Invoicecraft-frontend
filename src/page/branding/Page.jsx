@@ -181,62 +181,77 @@ useEffect(() => {
     }
     toast({ title: 'Success', description: `${type === 'logoUrl' ? 'Logo' : 'Signature'} will be removed upon saving.` });
   };
+const handleFormSubmit = async (data) => {
+    try {
+      const formData = new FormData();
 
-  const handleFormSubmit = async (data) => {
-    try {
-      const formData = new FormData();
+      // Append all form fields (including logoUrl and signatureUrl as potential strings)
+      Object.keys(data).forEach(key => {
+        // For non-file fields, append their value.
+        // Convert nulls to the string "null" for backend interpretation
+        if (key !== 'logoUrl' && key !== 'signatureUrl') {
+          formData.append(key, data[key] === null ? 'null' : data[key]);
+        }
+      });
 
-      // Append all form fields (excluding logoUrl and signatureUrl for files)
-      Object.keys(data).forEach(key => {
-        // Skip logoUrl and signatureUrl which are for preview/display only or handled separately
-        if (key !== 'logoUrl' && key !== 'signatureUrl' && data[key] !== null) {
-          formData.append(key, data[key]);
-        }
-      });
+      // Handle Logo File Upload/Deletion
+      if (logoFile) {
+        formData.append('logoFile', logoFile); // Send the new file
+        // Do NOT append logoUrl as a string if a new file is being uploaded
+      } else if (data.logoUrl === null && form.formState.dirtyFields.logoUrl) {
+        // If logoUrl was explicitly set to null (cleared by user), send a specific flag to backend
+        // The backend expects 'logoUrl' field in req.body to be 'null' string if file is removed
+        formData.append('logoUrl', 'null');
+      } else if (data.logoUrl) {
+        // If no new file, but there's an existing URL, send it back to keep it
+        // This ensures the backend knows to keep the existing URL if it wasn't changed or cleared
+        formData.append('logoUrl', data.logoUrl);
+      }
 
-      // Conditionally append logo file or deletion flag
-      if (logoFile) {
-        formData.append('logoFile', logoFile); // Send the new file
-      } else if (data.logoUrl === null && form.formState.dirtyFields.logoUrl) {
-        // Only send 'null_logo' if logoUrl was explicitly cleared by user
-        formData.append('logoFile', 'null_logo');
-      }
 
-      // Conditionally append signature file or deletion flag
-      if (signatureFile) {
-        formData.append('signatureFile', signatureFile); // Send the new file
-      } else if (data.signatureUrl === null && form.formState.dirtyFields.signatureUrl) {
-        // Only send 'null_signature' if signatureUrl was explicitly cleared by user
-        formData.append('signatureFile', 'null_signature');
-      }
+      // Handle Signature File Upload/Deletion
+      if (signatureFile) {
+        formData.append('signatureFile', signatureFile); // Send the new file
+        // Do NOT append signatureUrl as a string if a new file is being uploaded
+      } else if (data.signatureUrl === null && form.formState.dirtyFields.signatureUrl) {
+        // If signatureUrl was explicitly set to null (cleared by user), send a specific flag to backend
+        formData.append('signatureUrl', 'null');
+      } else if (data.signatureUrl) {
+        // If no new file, but there's an existing URL, send it back to keep it
+        formData.append('signatureUrl', data.signatureUrl);
+      }
 
-      // ✅ Use axiosInstance for authenticated PUT request with FormData
-      // Axios handles 'Content-Type': 'multipart/form-data' automatically for FormData
-      const response = await axiosInstance.put('/branding-settings', formData);
+      // Log FormData contents for debugging (optional, but very useful)
+      for (const pair of formData.entries()) {
+        console.log(`${pair[0]}: ${pair[1]}`);
+      }
 
-      const updatedSettings = response.data; // Axios returns data in .data
-      toast({ title: 'Success', description: 'Branding settings saved.' });
-      // Reset form with potentially new URLs from the backend after successful upload
-      form.reset({
-        ...updatedSettings,
-        logoUrl: updatedSettings.logoUrl || null,
-        signatureUrl: updatedSettings.signatureUrl || null,
-      });
-      // Clear file states after successful submission
-      setLogoFile(null);
-      setSignatureFile(null);
-      setIsSignatureDrawn(false);
+      // ✅ Use axiosInstance for authenticated PUT request with FormData
+      // Axios handles 'Content-Type': 'multipart/form-data' automatically for FormData
+      const response = await axiosInstance.put('/branding-settings', formData);
 
-    } catch (error) {
-      console.error("Failed to save branding settings:", error);
-      let errorMessage = 'Could not save branding settings.';
-      if (axios.isAxiosError(error)) {
-        errorMessage = error.response?.data?.message || error.response?.data?.error || errorMessage;
-      }
-      toast({ title: 'Error', description: errorMessage, variant: 'destructive' });
-    }
-  };
+      const updatedSettings = response.data; // Axios returns data in .data
+      toast({ title: 'Success', description: 'Branding settings saved.' });
+      // Reset form with potentially new URLs from the backend after successful upload
+      form.reset({
+        ...updatedSettings,
+        logoUrl: updatedSettings.logoUrl || null,
+        signatureUrl: updatedSettings.signatureUrl || null,
+      });
+      // Clear file states after successful submission
+      setLogoFile(null);
+      setSignatureFile(null);
+      setIsSignatureDrawn(false);
 
+    } catch (error) {
+      console.error("Failed to save branding settings:", error);
+      let errorMessage = 'Could not save branding settings.';
+      if (axios.isAxiosError(error)) {
+        errorMessage = error.response?.data?.message || error.response?.data?.error || errorMessage;
+      }
+      toast({ title: 'Error', description: errorMessage, variant: 'destructive' });
+    }
+  };
   const watchLogoUrl = form.watch('logoUrl');
   const watchSignatureUrl = form.watch('signatureUrl');
 

@@ -1,0 +1,16 @@
+/* calendar-override.css */
+.rdp-day_selected {
+  background-color: #16a34a !important; /* Tailwind green-600 */
+  color: white !important;
+  font-weight: 600 !important;
+}
+
+.rdp-day_selected:hover {
+  background-color: #15803d !important; /* Tailwind green-700 */
+}
+
+.rdp-day_today {
+  border: 1px solid #16a34a !important; /* Tailwind green-600 */
+  color: #166534 !important; /* Tailwind green-800 */
+  font-weight: 500 !important;
+}

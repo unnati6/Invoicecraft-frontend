@@ -5,7 +5,11 @@ import { getCurrencySymbol } from '../lib/currency-utils'; // Path adjusted
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import { CoverPageContent } from './cover-page-content'; // Path adjusted
-
+import { Button } from './ui/button'; // Assuming you have a Button component
+import { Download } from 'lucide-react'; // Import a download icon
+import { PDFDownloadLink } from '@react-pdf/renderer'; // Import PDFDownloadLink
+import OrderFormPDF from './OrderFormPDF'; // Import the OrderFormPDF component
+import OrderFormExcel from './OrderFormExcel';
 // Helper function
 const replacePlaceholders = (content, orderForm, customer) => {
   let replacedContent = content;
@@ -36,12 +40,41 @@ export function OrderFormPreviewContent({ document: orderForm, customer, coverPa
   console.log("[OrderFormPreviewContent] Received customer:", customer);
   console.log("[OrderFormPreviewContent] Received coverPageTemplate:", coverPageTemplate);
   console.log("[OrderFormPreviewContent] Received companyBranding:", companyBranding);
+  let parsedItems = [];
+  if (typeof orderForm.items === 'string' && orderForm.items.trim() !== '') {
+    try {
+      parsedItems = JSON.parse(orderForm.items);
+    } catch (e) {
+      console.error("Failed to parse orderForm.items:", e);
+    }
+  } else if (Array.isArray(orderForm.items)) {
+    parsedItems = orderForm.items;
+  }
+
+  let parsedAdditionalCharges = [];
+  if (typeof orderForm.additionalCharges === 'string' && orderForm.additionalCharges.trim() !== '') {
+    try {
+      parsedAdditionalCharges = JSON.parse(orderForm.additionalCharges);
+    } catch (e) {
+      console.error("Failed to parse orderForm.additionalCharges:", e);
+    }
+  } else if (Array.isArray(orderForm.additionalCharges)) {
+    parsedAdditionalCharges = orderForm.additionalCharges;
+  }
 
   // Safely access customer properties for display and ensure address parts are strings
   const customerToDisplay = {
     name: orderForm?.customerName || customer?.name || 'N/A',
     email: customer?.email || 'N/A',
-    company: customer?.company || undefined,
+    phone: customer?.phone || 'N/A',
+    company: {
+      name: customer?.company?.name || '',
+      street: customer?.company?.street || '',
+      city: customer?.company?.city || '',
+      state: customer?.company?.state || '',
+      zip: customer?.company?.zip || '',
+      country: customer?.company?.country || '',
+    },
     // Ensure addresses are objects, and their properties are explicitly defaulted to strings
     billingAddress: {
       street: customer?.billingAddress?.street || '',
@@ -122,40 +155,52 @@ export function OrderFormPreviewContent({ document: orderForm, customer, coverPa
         </div>
         <div className="text-right w-1/2">
           <h1 className="text-3xl font-bold text-primary">ORDER FORM</h1>
-          <p className="text-muted-foreground">Order Form #: {orderForm.orderFormNumber}</p>
-          <p className="text-muted-foreground">Version: {orderForm.version || '1.0'}</p>
+          <p className="text-muted-foreground">Order Form no: {orderForm.orderFormNumber}</p>
+
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
         <div className="md:col-span-1">
           <h3 className="font-semibold mb-1 text-muted-foreground">ORDER FORM FOR:</h3>
           <p className="font-medium">{String(customerToDisplay.name)}</p>
-          {customerToDisplay.company && <p className="text-sm">{String(customerToDisplay.company)}</p>}
-          {/* Now explicitly converting each address part to a string */}
-          {customerToDisplay.billingAddress.street && <p className="text-sm">{String(customerToDisplay.billingAddress.street)}</p>}
-          {(customerToDisplay.billingAddress.city || customerToDisplay.billingAddress.state || customerToDisplay.billingAddress.zip) && (
+           <p className="text-sm">{String(customerToDisplay.email)}</p>
+        
+         <p className="text-sm">{String(customerToDisplay.phone)}</p>
+            <p className="text-sm">{String(customerToDisplay.company.name)}</p>
+          
+         {/* Now explicitly converting each address part to a string */}
+          {(customerToDisplay.company.city || customerToDisplay.company.state || customerToDisplay.company.zip) && (
               <p className="text-sm">
-                {String(customerToDisplay.billingAddress.city)}
-                {(String(customerToDisplay.billingAddress.city) && String(customerToDisplay.billingAddress.state)) ? ', ' : ''}
-                {String(customerToDisplay.billingAddress.state)}
-                {(String(customerToDisplay.billingAddress.state) && String(customerToDisplay.billingAddress.zip)) ? ' ' : ''}
-                {String(customerToDisplay.billingAddress.zip)}
+                {String(customerToDisplay.company.city)}
+                {(String(customerToDisplay.company.city) && String(customerToDisplay.company.state)) ? ', ' : ''}
+                {String(customerToDisplay.company.state)}
+                {(String(customerToDisplay.company.state) && String(customerToDisplay.company.zip)) ? ' ' : ''}
+                {String(customerToDisplay.company.zip)}
               </p>
           )}
-          {customerToDisplay.billingAddress.country && <p className="text-sm">{String(customerToDisplay.billingAddress.country)}</p>}
+          {customerToDisplay.company.country && <p className="text-sm">{String(customerToDisplay.billingAddress.country)}</p>}
           
-          <p className="text-sm">{String(customerToDisplay.email)}</p>
-          {customerToDisplay.phone && <p className="text-sm">Phone: {String(customerToDisplay.phone)}</p>}
-        </div>
+           </div>
+         <div className="md:col-span-1">
+              <h3 className="font-semibold mb-1 text-muted-foreground">BILL TO:</h3>
+                   {customerToDisplay.billingAddress.street && <p className="text-sm">{String(customerToDisplay.billingAddress.street)}</p>}
+                {(customerToDisplay.billingAddress.city || customerToDisplay.billingAddress.state || customerToDisplay.billingAddress.zip) && (
+                        <p className="text-sm">
+                          {String(customerToDisplay.billingAddress.city)}
+                          {(String(customerToDisplay.billingAddress.city) && String(customerToDisplay.billingAddress.state)) ? ', ' : ''}
+                          {String(customerToDisplay.billingAddress.state)}
+                          {(String(customerToDisplay.billingAddress.state) && String(customerToDisplay.billingAddress.zip)) ? ' ' : ''}
+                          {String(customerToDisplay.billingAddress.zip)}
+                        </p>
+                    )}
+                {customerToDisplay.billingAddress.country && <p className="text-sm">{String(customerToDisplay.billingAddress.country)}</p>}
+            </div>
 
         {hasShippingAddress && (
             <div className="md:col-span-1">
               <h3 className="font-semibold mb-1 text-muted-foreground">SHIP TO:</h3>
-              <p className="font-medium">{String(customerToDisplay.name)}</p>
-              {customerToDisplay.company && <p className="text-sm">{String(customerToDisplay.company)}</p>}
-                {/* Now explicitly converting each address part to a string */}
-                {customerToDisplay.shippingAddress.street && <p className="text-sm">{String(customerToDisplay.shippingAddress.street)}</p>}
+                  {customerToDisplay.shippingAddress.street && <p className="text-sm">{String(customerToDisplay.shippingAddress.street)}</p>}
                 {(customerToDisplay.shippingAddress.city || customerToDisplay.shippingAddress.state || customerToDisplay.shippingAddress.zip) && (
                         <p className="text-sm">
                           {String(customerToDisplay.shippingAddress.city)}
@@ -193,7 +238,7 @@ export function OrderFormPreviewContent({ document: orderForm, customer, coverPa
       )}
 
       {/* Order Form Items */}
-      {(Array.isArray(orderForm.items) && orderForm.items.length > 0) && (
+      {(Array.isArray(parsedItems) && parsedItems.length > 0) && ( // Use parsedItems here
         <div className="mb-8">
           <h3 className="font-semibold mb-2 text-muted-foreground">Items & Services</h3>
           <table className="w-full border border-border">
@@ -207,8 +252,8 @@ export function OrderFormPreviewContent({ document: orderForm, customer, coverPa
               </tr>
             </thead>
             <tbody>
-              {orderForm.items.map((item) => (
-                <tr key={item.id} className="border-b border-border">
+              {parsedItems.map((item, index) => ( // Use parsedItems here
+                <tr key={item.id || index} className="border-b border-border">
                   <td className="p-2 border border-border">{String(item.description)}</td>
                   <td className="p-2 border border-border text-xs text-muted-foreground">{String(item.details || 'N/A')}</td>
                   <td className="p-2 text-right border border-border">{String(item.quantity)}</td>
@@ -222,13 +267,13 @@ export function OrderFormPreviewContent({ document: orderForm, customer, coverPa
       )}
 
       {/* Additional Charges */}
-      {(Array.isArray(orderForm.additionalCharges) && orderForm.additionalCharges.length > 0) && (
+      {(Array.isArray(parsedAdditionalCharges) && parsedAdditionalCharges.length > 0) && ( // Use parsedAdditionalCharges here
         <div className="mb-8">
           <h3 className="font-semibold mb-2 text-muted-foreground">Additional Charges</h3>
           <table className="w-full border-collapse">
             <tbody>
-              {orderForm.additionalCharges.map((charge) => (
-                <tr key={charge.id} className="border-b border-border">
+              {parsedAdditionalCharges.map((charge, index) => ( // Use parsedAdditionalCharges here
+                <tr key={charge.id || index} className="border-b border-border">
                   <td className="p-2 border border-border">
                     {String(charge.description)}
                     {charge.valueType === 'percentage' && ` (${String(charge.value)}%)`}
@@ -313,6 +358,30 @@ export function OrderFormPreviewContent({ document: orderForm, customer, coverPa
       {/* Page Break Hint (for print) */}
       <div className="hidden print:block h-64"></div>
       <div className="hidden print:block text-center text-muted-foreground text-xs mt-8">-- End of Order Form --</div>
+   <div className="flex justify-center gap-4 mt-8 print:hidden"> {/* Use gap-4 for spacing */}
+        {/* PDF Download Button */}
+        <PDFDownloadLink
+          document={<OrderFormPDF orderForm={orderForm} customer={customer} companyBranding={companyBranding} />}
+          fileName={`OrderForm_${orderForm.orderFormNumber || 'untitled'}.pdf`}
+        >
+          {({ blob, url, loading, error }) => (
+            <Button size="lg" disabled={loading}>
+              <Download className="mr-2 h-5 w-5" />
+              {loading ? 'Generating PDF...' : 'Download PDF'}
+            </Button>
+          )}
+        </PDFDownloadLink>
+
+        {/* Excel Download Button - Corrected usage */}
+        <OrderFormExcel orderForm={orderForm} customer={customer} companyBranding={companyBranding}>
+          <Button size="lg" variant="outline"> {/* Using 'outline' variant for distinction */}
+            <Download className="mr-2 h-5 w-5" />
+            Download Excel
+          </Button>
+        </OrderFormExcel>
+      </div>
+
     </div>
   );
 }
+

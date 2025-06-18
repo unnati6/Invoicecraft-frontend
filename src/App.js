@@ -33,6 +33,10 @@ import EditMsaTemplatePage from './page/templates/Msa Templates/Editmsatemplate/
 import { LogoutButton } from './Authentication/Logout';
 import ProtectedRoute from './lib/ProtectedRoute';
 import OrderFormsPage from './page/order-forms/Orderform';
+import NewOrderFormPage from './page/order-forms/Neworderform/page';
+import { OrderFormForm } from './components/orderform-form';
+import EditOrderFormPage from './page/order-forms/Editorderform/page';
+
 function App() {
   return (
 <>
@@ -68,7 +72,10 @@ function App() {
     <Route path='/Addmsatemplate' element={<ProtectedRoute><NewMsaTemplatePage /></ProtectedRoute>}/> 
     <Route path='/msatemp/:id/edit' element={<ProtectedRoute><EditMsaTemplatePage /></ProtectedRoute>}/>
     <Route path='/order-forms'element={<ProtectedRoute><OrderFormsPage /></ProtectedRoute>}/>
-    </Route>
+    <Route path='/Addorderform' element={<ProtectedRoute><NewOrderFormPage /></ProtectedRoute>}/>
+    <Route path='/orderform-form' element={<ProtectedRoute><OrderFormForm /></ProtectedRoute>}/>
+    <Route path='/Editorderform/:id/edit' element={<ProtectedRoute><EditOrderFormPage /></ProtectedRoute>}/>
+     </Route>
     </Routes>
 </Router>
 <Toaster />

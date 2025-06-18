@@ -18,15 +18,15 @@ export default function EditCoverPageTemplatePage() {
   const [template, setTemplate] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  useEffect(() => {
-    window.history.pushState(null, '', window.location.href);
-    window.onpopstate = () => {
-      const token = localStorage.getItem('supabase.auth.token');
-      if (!token) {
-        window.location.replace('/');
-      }
-    };
-  }, []);
+  // useEffect(() => {
+  //   window.history.pushState(null, '', window.location.href);
+  //   window.onpopstate = () => {
+  //     const token = localStorage.getItem('supabase.auth.token');
+  //     if (!token) {
+  //       window.location.replace('/');
+  //     }
+  //   };
+  // }, []);
   useEffect(() => {
     if (!templateId) { // Added check for templateId
       navigate('/coverpage'); // Redirect if no ID

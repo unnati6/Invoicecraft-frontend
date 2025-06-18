@@ -248,9 +248,25 @@ export default function OrderFormsPage() {
   const columns = [ // Removed type annotation
     { accessorKey: 'orderFormNumber', header: 'Number', cell: (row) => row.orderFormNumber, size: 120 },
     { accessorKey: 'customerName', header: 'Customer', cell: (row) => row.customerName || 'N/A', size: 200 },
-    { accessorKey: 'issueDate', header: 'Issue Date', cell: (row) => format(new Date(row.issueDate || 'N/A'), 'PP'), size: 120 },
-    { accessorKey: 'validUntilDate', header: 'Valid Until', cell: (row) => format(new Date(row.validUntilDate || 'N/A'), 'PP'), size: 120 },
-    { accessorKey: 'total', header: 'Total', cell: (row) => `${getCurrencySymbol(row.currencyCode)}${row.total !== undefined && row.total !== null ? row.total.toFixed(2) : 'N/A'}`, size: 100 },
+   {
+  accessorKey: 'issueDate',
+  header: 'Issue Date',
+  cell: (row) => {
+    const date = new Date(row.issueDate);
+    return isNaN(date.getTime()) ? 'N/A' : format(date, 'PP');
+  },
+  size: 120,
+},
+{
+  accessorKey: 'validUntilDate',
+  header: 'Valid Until',
+  cell: (row) => {
+    const date = new Date(row.validUntilDate);
+    return isNaN(date.getTime()) ? 'N/A' : format(date, 'PP');
+  },
+  size: 120,
+},
+{ accessorKey: 'total', header: 'Total', cell: (row) => `${getCurrencySymbol(row.currencyCode)}${row.total !== undefined && row.total !== null ? row.total.toFixed(2) : 'N/A'}`, size: 100 },
     {
       accessorKey: 'status',
       header: 'Status',
@@ -278,7 +294,7 @@ export default function OrderFormsPage() {
               }
             />
           )}
-          <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); navigate(`/orderforms/${row.id}`); }} title="Edit Order Form"> {/* Replaced router.push */}
+          <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); navigate(`/Editorderform/${row.id}/edit`); }} title="Edit Order Form"> {/* Replaced router.push */}
             <Edit className="h-4 w-4" />
           </Button>
           <DeleteConfirmationDialog
@@ -387,7 +403,7 @@ export default function OrderFormsPage() {
               </DropdownMenu>
             </>
           )}
-        <Link to="/orderforms/new"> {/* Replaced href with to */}
+        <Link to="/Addorderform"> {/* Replaced href with to */}
           <Button disabled={isBulkConverting || isDownloading}>
             <PlusCircle className="mr-2 h-4 w-4" /> Create Order Form
           </Button>
@@ -406,7 +422,7 @@ export default function OrderFormsPage() {
                 <p className="text-muted-foreground mb-4">
                   {searchTerm ? `Your search for "${searchTerm}" did not match any order forms.` : "Create your first order form to get started!"}
                 </p>
-                <Link to="/orderforms/new"> {/* Replaced href with to */}
+                <Link to="/Addorderform"> {/* Replaced href with to */}
                     <Button><PlusCircle className="mr-2 h-4 w-4" /> Create Your First Order Form</Button>
                 </Link>
               </div>
@@ -414,7 +430,7 @@ export default function OrderFormsPage() {
             <DataTable
               columns={columns}
               data={filteredOrderForms}
-              onRowClick={(row) => navigate(`/orderforms/${row.id}`)} 
+              onRowClick={(row) => navigate(`/Editorderform/${row.id}/edit`)} 
               noResultsMessage={searchTerm ? `No order forms match your filter "${searchTerm}".` : "No order forms found. Create your first order form!"}
               isSelectable={true}
               rowSelection={rowSelection}
