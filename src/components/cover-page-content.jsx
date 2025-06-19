@@ -9,6 +9,8 @@ const COMPANY_INFO_KEYS = {
   NAME: 'branding_company_name',
 };
 const BASE_URL = 'https://invoicecraft-backend.onrender.com';
+//const BASE_URL = 'http://localhost:5000';
+
 function replacePlaceholders(
   content,
   doc,

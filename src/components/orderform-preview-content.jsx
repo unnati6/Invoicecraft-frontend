@@ -1,5 +1,5 @@
 // OrderFormPreviewContent.js
-import React from 'react';
+import React,{useState} from 'react';
 import { format } from 'date-fns';
 import { getCurrencySymbol } from '../lib/currency-utils'; // Path adjusted
 import ReactMarkdown from 'react-markdown';
@@ -7,9 +7,10 @@ import rehypeRaw from 'rehype-raw';
 import { CoverPageContent } from './cover-page-content'; // Path adjusted
 import { Button } from './ui/button'; // Assuming you have a Button component
 import { Download } from 'lucide-react'; // Import a download icon
-import { PDFDownloadLink } from '@react-pdf/renderer'; // Import PDFDownloadLink
+import { PDFDownloadLink,pdf } from '@react-pdf/renderer'; // Import PDFDownloadLink
 import OrderFormPDF from './OrderFormPDF'; // Import the OrderFormPDF component
 import OrderFormExcel from './OrderFormExcel';
+import { BASE_URL } from '../lib/Api';
 // Helper function
 const replacePlaceholders = (content, orderForm, customer) => {
   let replacedContent = content;
@@ -21,9 +22,9 @@ const replacePlaceholders = (content, orderForm, customer) => {
   return replacedContent;
 };
 
-export function OrderFormPreviewContent({ document: orderForm, customer, coverPageTemplate, companyBranding }) {
-  // Defensive check: If orderForm is null or undefined, return an error message early.
-  // This prevents accessing properties of undefined.
+export function OrderFormPreviewContent({ document: orderForm, customer, coverPageTemplate, companyBranding ,authToken}) {
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
+    const [emailStatus, setEmailStatus] = useState(null); // To show success/error messages
   if (!orderForm) {
     console.error("[OrderFormPreviewContent] Received undefined or null document prop. Cannot render preview.");
     return (
@@ -116,9 +117,86 @@ export function OrderFormPreviewContent({ document: orderForm, customer, coverPa
     ? (orderForm.customPaymentFrequency?.trim() ? orderForm.customPaymentFrequency : 'Custom (Not specified)')
     : orderForm.paymentFrequency;
 
+    // This is the function you shared, which now uses the updated backend endpoint
+    const handleSendEmail = async () => {
+      const token = localStorage.getItem('supabase_access_token');
+  if (!token) {
+    console.error("Token missing. Cannot send email.");
+    return;
+  }
+        setIsSendingEmail(true);
+        setEmailStatus(null); // Clear previous status
+
+        try {
+            // Generate the PDF as a Blob
+            const pdfBlob = await pdf(
+                <OrderFormPDF orderForm={orderForm} customer={customer} companyBranding={companyBranding} />
+            ).toBlob();
+
+            // Read the Blob as a Base64 Data URL
+            const reader = new FileReader();
+            reader.readAsDataURL(pdfBlob);
+
+            reader.onloadend = async () => {
+                const base64data = reader.result.split(',')[1]; // Extract Base64 part
+
+                // Prepare the data to send to your backend
+                const emailData = {
+                    to: customer?.email || 'sales@example.com', // Get customer email or use a default
+                    subject: `Order Form #${orderForm.orderFormNumber} from ${companyBranding.name}`,
+                    body: `
+                        <p>Dear ${customer?.name || 'Customer'},</p>
+                        <p>Please find attached your Order Form with number <strong>${orderForm.orderFormNumber}</strong>, issued on ${orderForm.issueDate ? format(new Date(orderForm.issueDate), 'PPP') : 'N/A'}.</p>
+                        <p>If you have any questions, please feel free to contact us.</p>
+                        <p>Best regards,<br>${companyBranding.name}</p>
+                    `,
+                    pdfBufferBase64: base64data,
+                    senderName: companyBranding.name || 'InvoiceCraft'
+                };
+
+                try {
+                    // Send the request to your backend's new endpoint
+                    const response = await fetch(`${BASE_URL}/order-forms/${orderForm.id}/send-email`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${authToken}` // Use the actual auth token passed as a prop
+                        },
+                        body: JSON.stringify(emailData),
+                    });
+
+                    if (response.ok) {
+                        const result = await response.json();
+                        setEmailStatus({ type: 'success', message: result.message });
+                        console.log('Email sent successfully:', result);
+                    } else {
+                        const errorData = await response.json();
+                        setEmailStatus({ type: 'error', message: errorData.message || 'Failed to send email.' });
+                        console.error('Failed to send email:', errorData);
+                    }
+                } catch (networkError) {
+                    setEmailStatus({ type: 'error', message: 'Network error or server unreachable.' });
+                    console.error('Network error during email send:', networkError);
+                }
+            };
+
+            reader.onerror = (error) => {
+                setEmailStatus({ type: 'error', message: 'Error reading PDF file.' });
+                console.error('FileReader error:', error);
+            };
+
+        } catch (pdfGenerationError) {
+            setEmailStatus({ type: 'error', message: 'Error generating PDF.' });
+            console.error('PDF generation error:', pdfGenerationError);
+        } finally {
+            setIsSendingEmail(false);
+        }
+    };
+
+
   return (
     <div className="p-6 bg-card text-foreground font-sans text-sm">
-      {coverPageTemplate && orderForm?.msaContent && (
+      {coverPageTemplate  && (
         <>
           <CoverPageContent document={orderForm} customer={customer} template={coverPageTemplate} />
           <hr className="my-6 border-border" />
@@ -278,7 +356,7 @@ export function OrderFormPreviewContent({ document: orderForm, customer, coverPa
                     {String(charge.description)}
                     {charge.valueType === 'percentage' && ` (${String(charge.value)}%)`}
                   </td>
-                  <td className="p-2 text-right border border-border">{currencySymbol}{(charge.calculatedAmount ?? 0).toFixed(2)}</td>
+                  <td className="p-2 text-right border border-border">{currencySymbol}{(charge.value ?? 0).toFixed(2)}</td>
                 </tr>
               ))}
             </tbody>
@@ -379,6 +457,30 @@ export function OrderFormPreviewContent({ document: orderForm, customer, coverPa
             Download Excel
           </Button>
         </OrderFormExcel>
+
+            <Button size="lg" variant="outline"
+                onClick={handleSendEmail}
+                disabled={isSendingEmail || !orderForm.id || !customer?.email} // Disable if sending or critical data missing
+                
+            >
+                {isSendingEmail ? 'Sending Email...' : 'Send to Mail'}
+            </Button>
+
+            {/* Display email sending status */}
+            {emailStatus && (
+                <p style={{
+                    color: emailStatus.type === 'success' ? 'green' : 'red',
+                    marginTop: '10px'
+                }}>
+                    {emailStatus.message}
+                </p>
+            )}
+
+            {/* You might also have a PDF viewer here */}
+            {/* <PDFViewer style={{ width: '100%', height: '80vh' }}>
+                <OrderFormPDF orderForm={orderForm} customer={customer} companyBranding={companyBranding} />
+            </PDFViewer> */}
+
       </div>
 
     </div>

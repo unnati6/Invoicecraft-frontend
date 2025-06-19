@@ -20,12 +20,18 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../../components/ui/dropdown-menu"; // Path adjusted
-//import { downloadPdfForDocument, downloadMultipleDocumentsAsSinglePdf } from '../../lib/pdf-utils'; // Path adjusted
 import { getCurrencySymbol } from '../../lib/currency-utils'; // Path adjusted
-// import { BrandingSettingsFormData as BrandingSettings } from '@/lib/schemas'; // Type import removed
-
-// Backend interactions will now use axiosInstance
 import axiosInstance from '../../lib/axiosInstance'; // Path adjusted
+async function fetchCoverPageTemplateApi(id) {
+  if (!id) return null; // Handle cases where template ID might be null or undefined
+  try {
+    const response = await axiosInstance.get(`/cover-page-templates/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error(`API Error: Failed to fetch cover page template ${id}:`, error.response?.data || error.message);
+    return null; // Return null if not found or error
+  }
+}
 
 // --- New: Function to fetch BrandingSettings using axiosInstance ---
 async function fetchCompanyBrandingApi() {
@@ -83,6 +89,39 @@ export default function OrderFormsPage() {
   const [loadingCompanyBranding, setLoadingCompanyBranding] = useState(true);
   const [companyBrandingError, setCompanyBrandingError] = useState(null);
   // --- End of New State ---
+// New states for cover page template and authentication token
+  const [coverPageTemplate, setCoverPageTemplate] = useState(null); // State to store the template
+  const [loadingCoverPageTemplate, setLoadingCoverPageTemplate] = useState(true);
+  const [coverPageTemplateError, setCoverPageTemplateError] = useState(null);
+
+  // Placeholder for authToken. In a real app, this would come from your auth context/hook.
+  // Example: const { token: authToken } = useAuth(); // If you have a useAuth hook
+  const [authToken, setAuthToken] = useState(null); // Assuming you'll fetch or get this from context
+
+const filteredOrderForms = useMemo(() => {
+    if (!searchTerm.trim()) {
+      return orderForms;
+    }
+    const lowercasedFilter = searchTerm.toLowerCase();
+    return orderForms.filter(of =>
+      (of.customerName && of.customerName.toLowerCase().includes(lowercasedFilter))
+    );
+  }, [orderForms, searchTerm]);
+useEffect(() => {
+  const token = localStorage.getItem('supabase.auth.token');
+  if (token) {
+    try {
+      const parsedToken = JSON.parse(token);
+      const accessToken = parsedToken.access_token;
+
+      setAuthToken(accessToken);
+      localStorage.setItem('supabase_access_token', accessToken); // ✅ THIS IS KEY
+    } catch (e) {
+      setAuthToken(null);
+    }
+  }
+}, []);
+
 
   useEffect(() => {
     async function fetchData() {
@@ -118,11 +157,84 @@ export default function OrderFormsPage() {
         setLoadingCompanyBranding(false);
       }
     }
-    // --- End of New Fetch ---
+async function getCoverPageTemplate() {
+      // Assuming you have a default template ID or the branding settings provide one.
+      // For now, let's say it's hardcoded or fetched based on some logic.
+      // If you have multiple, you'd need to select one or load all.
+      // For simplicity, fetching a placeholder one if available, or if orderForm has msaCoverPageTemplateId
+      // However, OrderFormPreviewDialog fetches the orderForm itself.
+      // Let's assume for now, it's a fixed template ID or you get it from companyBranding.
+      // If `companyBranding` can contain a `defaultCoverPageTemplateId`, fetch it like this:
+      // const defaultTemplateId = companyBranding?.defaultCoverPageTemplateId;
+      // if (defaultTemplateId) {
+      //   const data = await fetchCoverPageTemplateApi(defaultTemplateId);
+      //   setCoverPageTemplate(data);
+      // }
+      // For now, if no specific ID is known, we might not pre-fetch here,
+      // but if there's a general 'default' you'd always use, you could.
+      // For the preview dialog, it might be better to fetch it *inside* the dialog
+      // if the template ID varies per order form.
+      // Given your OrderFormPreviewContent already expects `coverPageTemplate` as a prop,
+      // it means OrderFormsPage needs to provide it, or it needs to be fetched
+      // in OrderFormPreviewDialog based on orderForm.msaCoverPageTemplateId
+      setLoadingCoverPageTemplate(false); // Set to false to avoid infinite loading if not fetching
+    }
 
     fetchData();
     getCompanyBranding();
+    getCoverPageTemplate(); // Call the new fetch function
   }, [toast]); // Added toast to dependency array as it's used inside
+
+ const overallLoading = loading || loadingCompanyBranding || loadingCoverPageTemplate;
+
+  if (overallLoading) {
+    return (
+      <>
+        <AppHeader title="Order Forms">
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-10 w-64" />
+            <Skeleton className="h-10 w-44" />
+          </div>
+        </AppHeader>
+        <main className="flex-1 p-6 space-y-6">
+          <Card>
+            <CardHeader><CardTitle>All Order Forms</CardTitle></CardHeader>
+            <CardContent><div className="space-y-2">{[...Array(5)].map((_, i) => (<Skeleton key={i} className="h-12 w-full" />))}</div></CardContent>
+          </Card>
+        </main>
+      </>
+    );
+  }
+
+  if (companyBrandingError) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen text-center p-6">
+        <h1 className="text-2xl font-bold text-destructive">Error Loading Page</h1>
+        <p className="text-muted-foreground mt-2">{companyBrandingError}</p>
+        <p className="text-muted-foreground">Please check your backend connection or refresh the page.</p>
+        <Button onClick={() => window.location.reload()} className="mt-4">Reload Page</Button>
+      </div>
+    );
+  }
+
+  // Fallback if companyBranding is still null after loading
+  if (!companyBranding) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen text-center p-6">
+        <h1 className="text-2xl font-bold">Configuration Missing</h1>
+        <p className="text-muted-foreground mt-2">Company branding information could not be loaded. This is required for previewing documents.</p>
+        <p className="text-muted-foreground">Please ensure your branding settings are configured in the system.</p>
+        <Button onClick={() => navigate('/branding-numbering')} className="mt-4">Go to Branding Settings</Button>
+      </div>
+    );
+  }
+
+  // --- Handle fetching coverPageTemplate inside the dialog for specific order forms ---
+  // The `coverPageTemplate` passed to `OrderFormPreviewDialog`
+  // should ideally be the one specified in the `orderForm.msaCoverPageTemplateId`.
+  // The `OrderFormPreviewDialog` is the right place to fetch it once the `orderForm` is available.
+  // So, we'll remove `coverPageTemplate` state from `OrderFormsPage` and move its fetching logic
+  // to `OrderFormPreviewDialog`.
 
   const handleDeleteOrderForm = async (id) => {
     try {
@@ -151,48 +263,6 @@ export default function OrderFormsPage() {
       .map(([id]) => orderForms.find(q => q.id === id))
       .filter(q => !!q); // Filter out undefined/null entries
   };
-
-//   const handleDownloadIndividualPdfs = async () => {
-//     const selectedOrderForms = getSelectedOrderForms();
-//     if (selectedOrderForms.length === 0) {
-//       toast({ title: "No Selection", description: "Please select order forms to download.", variant: "destructive" });
-//       return;
-//     }
-
-//     setIsDownloading(true);
-//     toast({ title: "Processing PDFs...", description: `Preparing ${selectedOrderForms.length} order form(s) for download.` });
-
-//     for (const orderForm of selectedOrderForms) {
-//       try {
-//         let customer = undefined;
-//         if (orderForm.customerId) {
-//           customer = await fetchCustomerByIdApi(orderForm.customerId); // Changed to direct API call
-//         }
-//         await downloadPdfForDocument(orderForm, customer, companyBranding || undefined);
-//         if (selectedOrderForms.length > 1) await new Promise(resolve => setTimeout(resolve, 500));
-//       } catch (error) {
-//         console.error("Error downloading PDF for order form:", orderForm.orderFormNumber, error);
-//         toast({ title: "Download Error", description: `Failed to download PDF for ${orderForm.orderFormNumber}.`, variant: "destructive" });
-//       }
-//     }
-//     setIsDownloading(false);
-//     setRowSelection({});
-//   };
-
-//   const handleDownloadCombinedPdf = async () => {
-//     const selectedOrderForms = getSelectedOrderForms();
-//     if (selectedOrderForms.length === 0) {
-//       toast({ title: "No Selection", description: "Please select order forms for combined PDF.", variant: "destructive" });
-//       return;
-//     }
-//     setIsDownloading(true);
-//     const customersForPdf = await Promise.all(
-//       selectedOrderForms.map(q => q.customerId ? fetchCustomerByIdApi(q.customerId) : Promise.resolve(undefined))
-//     );
-//     await downloadMultipleDocumentsAsSinglePdf(selectedOrderForms, customersForPdf, 'Combined_OrderForms.pdf', companyBranding || undefined);
-//     setIsDownloading(false);
-//     setRowSelection({});
-//   };
 
   const handleBulkConvertToInvoices = async () => {
     const selectedOrderFormIds = Object.entries(rowSelection)
@@ -314,61 +384,7 @@ export default function OrderFormsPage() {
 
   const numSelected = Object.values(rowSelection).filter(Boolean).length;
 
-  const filteredOrderForms = useMemo(() => {
-    if (!searchTerm.trim()) {
-      return orderForms;
-    }
-    const lowercasedFilter = searchTerm.toLowerCase();
-    return orderForms.filter(of =>
-      (of.customerName && of.customerName.toLowerCase().includes(lowercasedFilter))
-    );
-  }, [orderForms, searchTerm]);
-
-  // Combine loading states
-  const overallLoading = loading || loadingCompanyBranding;
-
-  if (overallLoading) {
-    return (
-      <>
-        <AppHeader title="Order Forms">
-          <div className="flex items-center gap-2">
-            <Skeleton className="h-10 w-64" /> {/* Skeleton for filter input */}
-            <Skeleton className="h-10 w-44" /> {/* Skeleton for Create button */}
-          </div>
-        </AppHeader>
-        <main className="flex-1 p-6 space-y-6">
-          <Card>
-            <CardHeader><CardTitle>All Order Forms</CardTitle></CardHeader>
-            <CardContent><div className="space-y-2">{[...Array(5)].map((_, i) => (<Skeleton key={i} className="h-12 w-full" />))}</div></CardContent>
-          </Card>
-        </main>
-      </>
-    );
-  }
-
-  // Handle error specifically for company branding if it occurs
-  if (companyBrandingError) {
-    return (
-      <div className="flex flex-col items-center justify-center h-screen text-center p-6">
-        <h1 className="text-2xl font-bold text-destructive">Error Loading Page</h1>
-        <p className="text-muted-foreground mt-2">{companyBrandingError}</p>
-        <p className="text-muted-foreground">Please check your backend connection or refresh the page.</p>
-        <Button onClick={() => window.location.reload()} className="mt-4">Reload Page</Button>
-      </div>
-    );
-  }
-
-  // Fallback if companyBranding is still null after loading (shouldn't happen with error handling, but good for type safety)
-  if (!companyBranding) {
-    return (
-      <div className="flex flex-col items-center justify-center h-screen text-center p-6">
-        <h1 className="text-2xl font-bold">Configuration Missing</h1>
-        <p className="text-muted-foreground mt-2">Company branding information could not be loaded. This is required for previewing documents.</p>
-        <p className="text-muted-foreground">Please ensure your branding settings are configured in the system.</p>
-        <Button onClick={() => navigate('/branding-numbering')} className="mt-4">Go to Branding Settings</Button> {/* Changed to navigate */}
-      </div>
-    );
-  }
+  
 
 
   return (

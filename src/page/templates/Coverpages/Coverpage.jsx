@@ -27,6 +27,8 @@ export default function CoverPageTemplatesPage() {
   const [loading, setLoading] = React.useState(true);
   const [viewMode, setViewMode] = React.useState('card');
   const BASE_URL = 'https://invoicecraft-backend.onrender.com';
+  //const BASE_URL = 'http://localhost:5000';
+  
   const fetchTemplates = React.useCallback(async () => {
     setLoading(true);
     try {

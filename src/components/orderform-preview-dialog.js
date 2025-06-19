@@ -30,7 +30,7 @@ async function fetchCustomerByIdApi(id) {
   }
 }
 
-export function OrderFormPreviewDialog({ orderFormId, trigger, companyBranding,coverPageTemplate }) {
+export function OrderFormPreviewDialog({ orderFormId, trigger, companyBranding,coverPageTemplate,authToken }) {
   const { toast } = useToast();
   const [orderForm, setOrderForm] = useState(null);
   const [customer, setCustomer] = useState(null);
@@ -114,6 +114,7 @@ export function OrderFormPreviewDialog({ orderFormId, trigger, companyBranding,c
             customer={customer}
             companyBranding={companyBranding}
             coverPageTemplate={coverPageTemplate}
+            authToken={localStorage.getItem('supabase_access_token')}
             // coverPageTemplate prop if applicable, you might need to fetch this here too
           />
         ) : ( // Fallback if orderForm is null/undefined after loading completes without explicit error

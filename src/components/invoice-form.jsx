@@ -67,7 +67,7 @@ const paymentFrequencyOptions = [
 
 const NO_MSA_TEMPLATE_SELECTED = "_no_msa_template_";
 
-export function OrderFormForm({ onSubmit, initialData, isSubmitting = false }) {
+export function InvoiceForm({ onSubmit, initialData, isSubmitting = false }) {
   const [customers, setCustomers] = React.useState([]);
   const [isLoadingCustomers, setIsLoadingCustomers] = React.useState(true);
 //  const [orderFormNumber, setOrderFormNumber] = useState('Auto-generating...');
@@ -106,8 +106,8 @@ validUntilDate: initialData.validUntilDate ? new Date(initialData.validUntilDate
           discountDescription: initialData.discountDescription || '',
           discountType: initialData.discountType || 'fixed',
           discountValue: initialData.discountValue || 0,
-          linkedMsaTemplateId: initialData.linkedMsaTemplateId || NO_MSA_TEMPLATE_SELECTED,
-          msaContent: initialData.msaContent || '',
+          linkedMsaTemplateId: initialData.linkedMsaTemplateId === NO_MSA_TEMPLATE_SELECTED ? null : initialData.linkedMsaTemplateId,
+    msaContent: initialData.msaContent || '',
           msaCoverPageTemplateId: initialData.msaCoverPageTemplateId || '',
           termsAndConditions: initialData.termsAndConditions || '<p></p>',
           paymentTerms: initialData.paymentTerms || "Net 30 Days",
@@ -120,7 +120,7 @@ validUntilDate: initialData.validUntilDate ? new Date(initialData.validUntilDate
           serviceEndDate: initialData.serviceEndDate ? new Date(initialData.serviceEndDate) : null,
         }
       : {
-           orderFormNumber: 'Auto-generating...',
+           invoiceNumber: 'Auto-generating...',
           issueDate: new Date(),
           validUntilDate: new Date(new Date().setDate(new Date().getDate() + 30)),
           items: [{ description: '', quantity: 1, rate: 0, procurementPrice: undefined, vendorName: '' }],
@@ -164,11 +164,11 @@ validUntilDate: initialData.validUntilDate ? new Date(initialData.validUntilDate
             if (!initialData) { // Only fetch for new forms
                 setIsFetchingOrderNumber(true);
                 try {
-                    const response = await axiosInstance.get('/order-forms/next-number');
-                    form.setValue('orderFormNumber', response.data.nextOrderFormNumber); // Use form.setValue
+                    const response = await axiosInstance.get('/invoices/next-number');
+                    form.setValue('invoiceNumber', response.data.nextInvoiceNumber); // Use form.setValue
                 } catch (error) {
                     console.error('Error fetching next order form number:', error.response?.data || error.message);
-                    form.setValue('orderFormNumber', 'Error Loading Number'); // Use form.setValue
+                    form.setValue('invoiceNumber', 'Error Loading Number'); // Use form.setValue
                 } finally {
                     setIsFetchingOrderNumber(false);
                 }
@@ -400,7 +400,7 @@ validUntilDate: initialData.validUntilDate ? new Date(initialData.validUntilDate
           <div className="lg:col-span-2 space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>{initialData ? 'Edit Order Form' : 'Create New Order Form'}</CardTitle>
+                <CardTitle>{initialData ? 'Edit Invoice' : 'Create New Invoice'}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -441,10 +441,10 @@ validUntilDate: initialData.validUntilDate ? new Date(initialData.validUntilDate
             {initialData ? (
                     <FormField
                       control={form.control}
-                      name="orderFormNumber"
+                      name="invoiceNumber"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Order Form Number</FormLabel>
+                          <FormLabel>Invoice Number</FormLabel>
                           <FormControl>
                             {/* Display for existing data, always readOnly */}
                             <Input {...field} readOnly />
@@ -458,12 +458,12 @@ validUntilDate: initialData.validUntilDate ? new Date(initialData.validUntilDate
                   ) : (
                     // For new forms, display a placeholder or nothing at all
                     <FormItem>
-                      <FormLabel>Order Form Number</FormLabel>
+                      <FormLabel>Invoice Number</FormLabel>
                       <FormControl>
                         <Input
                           placeholder="Auto-generated upon creation"
                           disabled
-                                   value={isFetchingOrderNumber ? "Loading..." : form.getValues('orderFormNumber')} // Display loading state
+                                   value={isFetchingOrderNumber ? "Loading..." : form.getValues('invoiceNumber')} // Display loading state
 
                         />
                       </FormControl>
@@ -697,7 +697,7 @@ validUntilDate: initialData.validUntilDate ? new Date(initialData.validUntilDate
              </Card>
 
              <Card>
-               <CardHeader><CardTitle>Order Form Items</CardTitle></CardHeader>
+               <CardHeader><CardTitle>Invoice Items</CardTitle></CardHeader>
                <CardContent className="space-y-4">
                  {itemFields.map((field, index) => {
                    const itemQuantity = form.watch(`items.${index}.quantity`) || 0;
@@ -780,7 +780,7 @@ validUntilDate: initialData.validUntilDate ? new Date(initialData.validUntilDate
                          <Input value={(itemQuantity * (form.watch(`items.${index}.rate`) || 0)).toFixed(2)} readOnly className="font-semibold text-right" />
                        </FormItem>
                      </div>
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 ">
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                        <FormField
                          control={form.control}
                          name={`items.${index}.procurementPrice`}
@@ -816,8 +816,8 @@ validUntilDate: initialData.validUntilDate ? new Date(initialData.validUntilDate
                        </FormItem>
                      )}
                      {itemFields.length > 1 && (
-                       <Button type="button" variant="destructive" size="xs" onClick={() => removeItem(index)} className="absolute top-1 right-4">
-                         <X className="h-3 w-3" /> 
+                       <Button type="button" variant="destructive" size="xs" onClick={() => removeItem(index)} className="absolute top-1 right-2">
+                         <X className="h-4 w-4" />
                        </Button>
                      )}
                    </div>
@@ -883,7 +883,7 @@ validUntilDate: initialData.validUntilDate ? new Date(initialData.validUntilDate
                    </div>
                    {chargeFields.length > 0 && (
                      <Button type="button" variant="destructive" size="xs" onClick={() => removeCharge(index)} className="absolute top-1 right-2">
-                       <X className="h-4 w-4 " />
+                       <X className="h-4 w-4" /> 
                      </Button>
                    )}
                  </div>
@@ -1012,6 +1012,8 @@ validUntilDate: initialData.validUntilDate ? new Date(initialData.validUntilDate
                                            onChange={field.onChange}
                                            onBlur={field.onBlur}
                                            placeholder="Enter MSA content here. It will be included in the order form preview and PDF."
+                                            disabled={form.watch('linkedMsaTemplateId') !== NO_MSA_TEMPLATE_SELECTED && form.watch('linkedMsaTemplateId') !== null}
+                              
                                        />
                                    </FormControl>
                                    <FormMessage />
@@ -1141,7 +1143,7 @@ validUntilDate: initialData.validUntilDate ? new Date(initialData.validUntilDate
              </CardContent>
              <CardFooter className="justify-end">
                <Button type="submit" disabled={isSubmitting}>
-                 {isSubmitting ? 'Saving...' : initialData ? 'Save Changes' : 'Create Order Form'}
+                 {isSubmitting ? 'Saving...' : initialData ? 'Save Changes' : 'Create Invoice'}
                </Button>
              </CardFooter>
            </Card>

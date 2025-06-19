@@ -36,8 +36,14 @@ import OrderFormsPage from './page/order-forms/Orderform';
 import NewOrderFormPage from './page/order-forms/Neworderform/page';
 import { OrderFormForm } from './components/orderform-form';
 import EditOrderFormPage from './page/order-forms/Editorderform/page';
+import InvoicesPage from './page/invoice/Invoice';
+import NewInvoicePage from './page/invoice/Newinvoice/page';
+import { InvoiceForm } from './components/invoice-form';
+import EditInvoicePage from './page/invoice/Editinvoice/page';
+import PurchaseOrdersPage from './page/purchase-order/Purchaseorder';
 
 function App() {
+
   return (
 <>
 <Router>
@@ -75,7 +81,12 @@ function App() {
     <Route path='/Addorderform' element={<ProtectedRoute><NewOrderFormPage /></ProtectedRoute>}/>
     <Route path='/orderform-form' element={<ProtectedRoute><OrderFormForm /></ProtectedRoute>}/>
     <Route path='/Editorderform/:id/edit' element={<ProtectedRoute><EditOrderFormPage /></ProtectedRoute>}/>
-     </Route>
+     <Route path='/invoices' element={<ProtectedRoute><InvoicesPage /></ProtectedRoute>}/>
+      <Route path='/Addinvoice' element={<ProtectedRoute><NewInvoicePage /></ProtectedRoute>}/>
+      <Route path='/invoice-form' element={<ProtectedRoute><InvoiceForm /></ProtectedRoute>}/>
+      <Route path='/Editinvoice/:id/edit' element={<ProtectedRoute><EditInvoicePage /></ProtectedRoute>}/>
+      <Route path='/purchaseorder' element={<ProtectedRoute><PurchaseOrdersPage /></ProtectedRoute>}/>
+    </Route>
     </Routes>
 </Router>
 <Toaster />

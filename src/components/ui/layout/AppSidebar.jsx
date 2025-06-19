@@ -51,7 +51,7 @@ export function AppSidebar() {
     { href: '/customers', label: 'Customers', icon: Users },
     { href: '/order-forms', label: 'Order Forms', icon: OrderFormIcon },
     { href: '/invoices', label: 'Invoices', icon: FileText },
-    { href: '/purchase-orders', label: 'Purchase Orders', icon: ShoppingCart },
+    { href: '/purchaseorder', label: 'Purchase Orders', icon: ShoppingCart },
     { href: '/item-repository', label: 'Item Repository', icon: Archive },
   ];
 
