@@ -6,11 +6,13 @@ import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import { CoverPageContent } from './cover-page-content'; // Path adjusted
 import { Button } from './ui/button'; // Assuming you have a Button component
-import { Download } from 'lucide-react'; // Import a download icon
+import { Download ,Mail } from 'lucide-react'; // Import a download icon
 import { PDFDownloadLink,pdf } from '@react-pdf/renderer'; // Import PDFDownloadLink
 import OrderFormPDF from './OrderFormPDF'; // Import the OrderFormPDF component
 import OrderFormExcel from './OrderFormExcel';
 import { BASE_URL } from '../lib/Api';
+import { EmailInvoiceDialog } from './email-invoice-dialog';
+
 // Helper function
 const replacePlaceholders = (content, orderForm, customer) => {
   let replacedContent = content;
@@ -23,8 +25,10 @@ const replacePlaceholders = (content, orderForm, customer) => {
 };
 
 export function OrderFormPreviewContent({ document: orderForm, customer, coverPageTemplate, companyBranding ,authToken}) {
-  const [isSendingEmail, setIsSendingEmail] = useState(false);
-    const [emailStatus, setEmailStatus] = useState(null); // To show success/error messages
+  // const [isSendingEmail, setIsSendingEmail] = useState(false);
+  //   const [emailStatus, setEmailStatus] = useState(null); // To show success/error messages
+   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false); // <-- New state for dialog visibility
+
   if (!orderForm) {
     console.error("[OrderFormPreviewContent] Received undefined or null document prop. Cannot render preview.");
     return (
@@ -118,80 +122,80 @@ export function OrderFormPreviewContent({ document: orderForm, customer, coverPa
     : orderForm.paymentFrequency;
 
     // This is the function you shared, which now uses the updated backend endpoint
-    const handleSendEmail = async () => {
-      const token = localStorage.getItem('supabase_access_token');
-  if (!token) {
-    console.error("Token missing. Cannot send email.");
-    return;
-  }
-        setIsSendingEmail(true);
-        setEmailStatus(null); // Clear previous status
+  //   const handleSendEmail = async () => {
+  //     const token = localStorage.getItem('supabase_access_token');
+  // if (!token) {
+  //   console.error("Token missing. Cannot send email.");
+  //   return;
+  // }
+  //       setIsSendingEmail(true);
+  //       setEmailStatus(null); // Clear previous status
 
-        try {
-            // Generate the PDF as a Blob
-            const pdfBlob = await pdf(
-                <OrderFormPDF orderForm={orderForm} customer={customer} companyBranding={companyBranding} />
-            ).toBlob();
+  //       try {
+  //           // Generate the PDF as a Blob
+  //           const pdfBlob = await pdf(
+  //               <OrderFormPDF orderForm={orderForm} customer={customer} companyBranding={companyBranding} />
+  //           ).toBlob();
 
-            // Read the Blob as a Base64 Data URL
-            const reader = new FileReader();
-            reader.readAsDataURL(pdfBlob);
+  //           // Read the Blob as a Base64 Data URL
+  //           const reader = new FileReader();
+  //           reader.readAsDataURL(pdfBlob);
 
-            reader.onloadend = async () => {
-                const base64data = reader.result.split(',')[1]; // Extract Base64 part
+  //           reader.onloadend = async () => {
+  //               const base64data = reader.result.split(',')[1]; // Extract Base64 part
 
-                // Prepare the data to send to your backend
-                const emailData = {
-                    to: customer?.email || 'sales@example.com', // Get customer email or use a default
-                    subject: `Order Form #${orderForm.orderFormNumber} from ${companyBranding.name}`,
-                    body: `
-                        <p>Dear ${customer?.name || 'Customer'},</p>
-                        <p>Please find attached your Order Form with number <strong>${orderForm.orderFormNumber}</strong>, issued on ${orderForm.issueDate ? format(new Date(orderForm.issueDate), 'PPP') : 'N/A'}.</p>
-                        <p>If you have any questions, please feel free to contact us.</p>
-                        <p>Best regards,<br>${companyBranding.name}</p>
-                    `,
-                    pdfBufferBase64: base64data,
-                    senderName: companyBranding.name || 'InvoiceCraft'
-                };
+  //               // Prepare the data to send to your backend
+  //               const emailData = {
+  //                   to: customer?.email || 'sales@example.com', // Get customer email or use a default
+  //                   subject: `Order Form #${orderForm.orderFormNumber} from ${companyBranding.name}`,
+  //                   body: `
+  //                       <p>Dear ${customer?.name || 'Customer'},</p>
+  //                       <p>Please find attached your Order Form with number <strong>${orderForm.orderFormNumber}</strong>, issued on ${orderForm.issueDate ? format(new Date(orderForm.issueDate), 'PPP') : 'N/A'}.</p>
+  //                       <p>If you have any questions, please feel free to contact us.</p>
+  //                       <p>Best regards,<br>${companyBranding.name}</p>
+  //                   `,
+  //                   pdfBufferBase64: base64data,
+  //                   senderName: companyBranding.name || 'InvoiceCraft'
+  //               };
 
-                try {
-                    // Send the request to your backend's new endpoint
-                    const response = await fetch(`${BASE_URL}/order-forms/${orderForm.id}/send-email`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${authToken}` // Use the actual auth token passed as a prop
-                        },
-                        body: JSON.stringify(emailData),
-                    });
+  //               try {
+  //                   // Send the request to your backend's new endpoint
+  //                   const response = await fetch(`${BASE_URL}/order-forms/${orderForm.id}/send-email`, {
+  //                       method: 'POST',
+  //                       headers: {
+  //                           'Content-Type': 'application/json',
+  //                           'Authorization': `Bearer ${authToken}` // Use the actual auth token passed as a prop
+  //                       },
+  //                       body: JSON.stringify(emailData),
+  //                   });
 
-                    if (response.ok) {
-                        const result = await response.json();
-                        setEmailStatus({ type: 'success', message: result.message });
-                        console.log('Email sent successfully:', result);
-                    } else {
-                        const errorData = await response.json();
-                        setEmailStatus({ type: 'error', message: errorData.message || 'Failed to send email.' });
-                        console.error('Failed to send email:', errorData);
-                    }
-                } catch (networkError) {
-                    setEmailStatus({ type: 'error', message: 'Network error or server unreachable.' });
-                    console.error('Network error during email send:', networkError);
-                }
-            };
+  //                   if (response.ok) {
+  //                       const result = await response.json();
+  //                       setEmailStatus({ type: 'success', message: result.message });
+  //                       console.log('Email sent successfully:', result);
+  //                   } else {
+  //                       const errorData = await response.json();
+  //                       setEmailStatus({ type: 'error', message: errorData.message || 'Failed to send email.' });
+  //                       console.error('Failed to send email:', errorData);
+  //                   }
+  //               } catch (networkError) {
+  //                   setEmailStatus({ type: 'error', message: 'Network error or server unreachable.' });
+  //                   console.error('Network error during email send:', networkError);
+  //               }
+  //           };
 
-            reader.onerror = (error) => {
-                setEmailStatus({ type: 'error', message: 'Error reading PDF file.' });
-                console.error('FileReader error:', error);
-            };
+  //           reader.onerror = (error) => {
+  //               setEmailStatus({ type: 'error', message: 'Error reading PDF file.' });
+  //               console.error('FileReader error:', error);
+  //           };
 
-        } catch (pdfGenerationError) {
-            setEmailStatus({ type: 'error', message: 'Error generating PDF.' });
-            console.error('PDF generation error:', pdfGenerationError);
-        } finally {
-            setIsSendingEmail(false);
-        }
-    };
+  //       } catch (pdfGenerationError) {
+  //           setEmailStatus({ type: 'error', message: 'Error generating PDF.' });
+  //           console.error('PDF generation error:', pdfGenerationError);
+  //       } finally {
+  //           setIsSendingEmail(false);
+  //       }
+  //   };
 
 
   return (
@@ -458,29 +462,30 @@ export function OrderFormPreviewContent({ document: orderForm, customer, coverPa
           </Button>
         </OrderFormExcel>
 
-            <Button size="lg" variant="outline"
-                onClick={handleSendEmail}
-                disabled={isSendingEmail || !orderForm.id || !customer?.email} // Disable if sending or critical data missing
-                
-            >
-                {isSendingEmail ? 'Sending Email...' : 'Send to Mail'}
-            </Button>
+        {/* Send to Mail Button - Now opens the dialog */}
+        <Button
+            size="lg"
+            variant="outline"
+            onClick={() => setIsEmailDialogOpen(true)} // <-- Open the dialog on click
+            disabled={!orderForm.id || !customer?.email} // Disable if critical data missing
+        >
+            <Mail className="mr-2 h-5 w-5" /> {/* Using Mail icon */}
+            Send to Mail
+        </Button>
 
-            {/* Display email sending status */}
-            {emailStatus && (
-                <p style={{
-                    color: emailStatus.type === 'success' ? 'green' : 'red',
-                    marginTop: '10px'
-                }}>
-                    {emailStatus.message}
-                </p>
-            )}
-
-            {/* You might also have a PDF viewer here */}
-            {/* <PDFViewer style={{ width: '100%', height: '80vh' }}>
-                <OrderFormPDF orderForm={orderForm} customer={customer} companyBranding={companyBranding} />
-            </PDFViewer> */}
-
+        {/* Removed emailStatus display from here, dialog handles its own status */}
+        
+        {/* Email Dialog Component */}
+        {isEmailDialogOpen && ( // Only render when open
+            <EmailInvoiceDialog
+                isOpen={isEmailDialogOpen}
+                onClose={() => setIsEmailDialogOpen(false)}
+                documentData={orderForm} // Pass order form data as documentData
+                customerData={customerToDisplay} // Pass customer data
+                companyBranding={companyBranding} // Pass company branding
+                authToken={authToken} // Pass the auth token
+            />
+        )}
       </div>
 
     </div>

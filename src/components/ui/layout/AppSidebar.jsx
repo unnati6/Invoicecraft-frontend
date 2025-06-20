@@ -67,7 +67,7 @@ export function AppSidebar() {
   };
 
   const eSignatureMenuItems = [
-    { href: '/e-signature/select-document', label: 'Send for Signature', icon: PenSquare },
+    { href: '/e-signature', label: 'Send for Signature', icon: PenSquare },
   ];
 
   const adminNavItems = [

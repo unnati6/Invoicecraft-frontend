@@ -6,11 +6,12 @@ import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import { CoverPageContent } from './cover-page-content'; // Assuming cover pages can apply to invoices
 import { Button } from './ui/button';
-import { Download } from 'lucide-react';
+import { Download , Mail} from 'lucide-react';
 import { PDFDownloadLink, pdf } from '@react-pdf/renderer';
 import InvoicePDF from './InvoicePDF'; // Correct: This is a default import as exported by InvoicePDF.jsx
 import InvoiceExcel from './InvoiceExcel';
 import { BASE_URL } from '../lib/Api';
+import { EmailOrderDialog } from './email-order-dialog';
 // Helper function
 const replacePlaceholders = (content, invoice, customer) => {
   let replacedContent = content;
@@ -23,9 +24,10 @@ const replacePlaceholders = (content, invoice, customer) => {
 };
 
 export function InvoicePreviewContent({ document: invoice, customer, coverPageTemplate, companyBranding, authToken }) { // Changed component name and prop name
-  const [isSendingEmail, setIsSendingEmail] = useState(false);
-  const [emailStatus, setEmailStatus] = useState(null); // To show success/error messages
+//  const [isSendingEmail, setIsSendingEmail] = useState(false);
+  //const [emailStatus, setEmailStatus] = useState(null); // To show success/error messages
 console.log("DEBUG: InvoiceExcel after import:", InvoiceExcel);
+ const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false); // <-- New state for dialog visibility
 
   if (!invoice) { // Changed prop name
     console.error("[InvoicePreviewContent] Received undefined or null document prop. Cannot render preview."); // Message changed
@@ -119,80 +121,80 @@ console.log("DEBUG: InvoiceExcel after import:", InvoiceExcel);
     ? (invoice.customPaymentFrequency?.trim() ? invoice.customPaymentFrequency : 'Custom (Not specified)') // Changed prop
     : invoice.paymentFrequency; // Changed prop
 
-  const handleSendEmail = async () => {
-    const token = localStorage.getItem('supabase_access_token');
-    if (!token) {
-      console.error("Token missing. Cannot send email.");
-      return;
-    }
-    setIsSendingEmail(true);
-    setEmailStatus(null); // Clear previous status
+  // const handleSendEmail = async () => {
+  //   const token = localStorage.getItem('supabase_access_token');
+  //   if (!token) {
+  //     console.error("Token missing. Cannot send email.");
+  //     return;
+  //   }
+  //   setIsSendingEmail(true);
+  //   setEmailStatus(null); // Clear previous status
 
-    try {
-      // Generate the PDF as a Blob
-      const pdfBlob = await pdf(
-        <InvoicePDF invoice={invoice} customer={customer} companyBranding={companyBranding} /> // Changed component and prop
-      ).toBlob();
+  //   try {
+  //     // Generate the PDF as a Blob
+  //     const pdfBlob = await pdf(
+  //       <InvoicePDF invoice={invoice} customer={customer} companyBranding={companyBranding} /> // Changed component and prop
+  //     ).toBlob();
 
-      // Read the Blob as a Base64 Data URL
-      const reader = new FileReader();
-      reader.readAsDataURL(pdfBlob);
+  //     // Read the Blob as a Base64 Data URL
+  //     const reader = new FileReader();
+  //     reader.readAsDataURL(pdfBlob);
 
-      reader.onloadend = async () => {
-        const base64data = reader.result.split(',')[1]; // Extract Base64 part
+  //     reader.onloadend = async () => {
+  //       const base64data = reader.result.split(',')[1]; // Extract Base64 part
 
-        // Prepare the data to send to your backend
-        const emailData = {
-          to: customer?.email || 'sales@example.com', // Get customer email or use a default
-          subject: `Invoice #${invoice.invoiceNumber} from ${companyBranding.name}`, // Message changed
-          body: `
-            <p>Dear ${customer?.name || 'Customer'},</p>
-            <p>Please find attached your Invoice with number <strong>${invoice.invoiceNumber}</strong>, issued on ${invoice.issueDate ? format(new Date(invoice.issueDate), 'PPP') : 'N/A'}.</p>
-            <p>If you have any questions, please feel free to contact us.</p>
-            <p>Best regards,<br>${companyBranding.name}</p>
-          `,
-          pdfBufferBase64: base64data,
-          senderName: companyBranding.name || 'InvoiceCraft'
-        };
+  //       // Prepare the data to send to your backend
+  //       const emailData = {
+  //         to: customer?.email || 'sales@example.com', // Get customer email or use a default
+  //         subject: `Invoice #${invoice.invoiceNumber} from ${companyBranding.name}`, // Message changed
+  //         body: `
+  //           <p>Dear ${customer?.name || 'Customer'},</p>
+  //           <p>Please find attached your Invoice with number <strong>${invoice.invoiceNumber}</strong>, issued on ${invoice.issueDate ? format(new Date(invoice.issueDate), 'PPP') : 'N/A'}.</p>
+  //           <p>If you have any questions, please feel free to contact us.</p>
+  //           <p>Best regards,<br>${companyBranding.name}</p>
+  //         `,
+  //         pdfBufferBase64: base64data,
+  //         senderName: companyBranding.name || 'InvoiceCraft'
+  //       };
 
-        try {
-          // Send the request to your backend's new endpoint
-          const response = await fetch(`${BASE_URL}/invoices/${invoice.id}/send-email`, { // Changed endpoint
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${authToken}` // Use the actual auth token passed as a prop
-            },
-            body: JSON.stringify(emailData),
-          });
+  //       try {
+  //         // Send the request to your backend's new endpoint
+  //         const response = await fetch(`${BASE_URL}/invoices/${invoice.id}/send-email`, { // Changed endpoint
+  //           method: 'POST',
+  //           headers: {
+  //             'Content-Type': 'application/json',
+  //             'Authorization': `Bearer ${authToken}` // Use the actual auth token passed as a prop
+  //           },
+  //           body: JSON.stringify(emailData),
+  //         });
 
-          if (response.ok) {
-            const result = await response.json();
-            setEmailStatus({ type: 'success', message: result.message });
-            console.log('Email sent successfully:', result);
-          } else {
-            const errorData = await response.json();
-            setEmailStatus({ type: 'error', message: errorData.message || 'Failed to send email.' });
-            console.error('Failed to send email:', errorData);
-          }
-        } catch (networkError) {
-          setEmailStatus({ type: 'error', message: 'Network error or server unreachable.' });
-          console.error('Network error during email send:', networkError);
-        }
-      };
+  //         if (response.ok) {
+  //           const result = await response.json();
+  //           setEmailStatus({ type: 'success', message: result.message });
+  //           console.log('Email sent successfully:', result);
+  //         } else {
+  //           const errorData = await response.json();
+  //           setEmailStatus({ type: 'error', message: errorData.message || 'Failed to send email.' });
+  //           console.error('Failed to send email:', errorData);
+  //         }
+  //       } catch (networkError) {
+  //         setEmailStatus({ type: 'error', message: 'Network error or server unreachable.' });
+  //         console.error('Network error during email send:', networkError);
+  //       }
+  //     };
 
-      reader.onerror = (error) => {
-        setEmailStatus({ type: 'error', message: 'Error reading PDF file.' });
-        console.error('FileReader error:', error);
-      };
+  //     reader.onerror = (error) => {
+  //       setEmailStatus({ type: 'error', message: 'Error reading PDF file.' });
+  //       console.error('FileReader error:', error);
+  //     };
 
-    } catch (pdfGenerationError) {
-      setEmailStatus({ type: 'error', message: 'Error generating PDF.' });
-      console.error('PDF generation error:', pdfGenerationError);
-    } finally {
-      setIsSendingEmail(false);
-    }
-  };
+  //   } catch (pdfGenerationError) {
+  //     setEmailStatus({ type: 'error', message: 'Error generating PDF.' });
+  //     console.error('PDF generation error:', pdfGenerationError);
+  //   } finally {
+  //     setIsSendingEmail(false);
+  //   }
+  // };
 
   return (
     <div className="p-6 bg-card text-foreground font-sans text-sm">
@@ -457,22 +459,29 @@ console.log("DEBUG: InvoiceExcel after import:", InvoiceExcel);
   children={<Button size="lg" variant="outline"><Download className="mr-2 h-5 w-5" />Download Excel</Button>}
 />
 
-
-        <Button size="lg" variant="outline"
-          onClick={handleSendEmail}
-          disabled={isSendingEmail || !invoice.id || !customer?.email} // Changed prop
+{/* Send to Mail Button - Now opens the dialog */}
+        <Button
+            size="lg"
+            variant="outline"
+            onClick={() => setIsEmailDialogOpen(true)} // <-- Open the dialog on click
+            disabled={!invoice.id || !customer?.email} // Disable if critical data missing
         >
-          {isSendingEmail ? 'Sending Email...' : 'Send to Mail'}
+            <Mail className="mr-2 h-5 w-5" /> {/* Using Mail icon */}
+            Send to Mail
         </Button>
 
-        {/* Display email sending status */}
-        {emailStatus && (
-          <p style={{
-            color: emailStatus.type === 'success' ? 'green' : 'red',
-            marginTop: '10px'
-          }}>
-            {emailStatus.message}
-          </p>
+        {/* Removed emailStatus display from here, dialog handles its own status */}
+        
+        {/* Email Dialog Component */}
+        {isEmailDialogOpen && ( // Only render when open
+            <EmailOrderDialog
+                isOpen={isEmailDialogOpen}
+                onClose={() => setIsEmailDialogOpen(false)}
+                documentData={invoice} // Pass order form data as documentData
+                customerData={customerToDisplay} // Pass customer data
+                companyBranding={companyBranding} // Pass company branding
+                authToken={authToken} // Pass the auth token
+            />
         )}
 
       </div>

@@ -50,10 +50,12 @@ export default function PurchaseOrdersPage() {
       await axiosInstance.delete(`${PURCHASE_ORDERS_API_BASE_URL}/${id}`);
       setPurchaseOrders(prev => prev.filter(po => po.id !== id));
       toast({ title: "Success", description: "Purchase Order deleted." });
+      navigate('/purchaseorder')
     } catch (error) {
       console.error("Failed to delete purchase order:", error);
       const errorMessage = error.response?.data?.message || "Failed to delete purchase order.";
       toast({ title: "Error", description: errorMessage, variant: "destructive" });
+      
     }
   };
 
@@ -73,10 +75,10 @@ export default function PurchaseOrdersPage() {
    
     { accessorKey: 'issueDate', header: 'Issue Date', cell: (row) => format(new Date(row.issueDate), 'PP'), size: 120 },
    {
-  accessorKey: 'grandTotalVendorPayable',
+  accessorKey: 'total_amount',
   header: 'Total Payable',
   cell: (row) => {
-    const total = row.grandTotalVendorPayable ?? 0; // Use 0 if undefined or null
+    const total = row.total_amount ?? 0; // Use 0 if undefined or null
     const currency = getCurrencySymbol(row.currencyCode); // Ensure currencyCode also exists
     return `${currency}${total.toFixed(2)}`;
   },
@@ -96,11 +98,11 @@ export default function PurchaseOrdersPage() {
       accessorKey: 'actions',
       header: 'Actions',
       cell: (row) => (
-        <div className="flex space-x-1">
-          <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); navigate(`/purchase-orders/${row.id}`); }} title={row.status === 'Draft' ? "Edit Purchase Order" : "View Purchase Order"}>
-            {row.status === 'Draft' ? <Edit className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+        <div className="flex space-x-1" onClick={(e) => e.stopPropagation()}>
+          <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); navigate(`/Editpurchaseorder/${row.id}/edit`); }} title="Edit Purchase Order" >
+            <Edit className="h-4 w-4" />
           </Button>
-          {row.status === 'Draft' && ( // Only allow delete for Draft POs
+
             <DeleteConfirmationDialog
               onConfirm={() => handleDeletePurchaseOrder(row.id)}
               itemName={`purchase order ${row.poNumber}`}
@@ -110,7 +112,7 @@ export default function PurchaseOrdersPage() {
                 </Button>
               }
             />
-          )}
+          
         </div>
       ),
       size: 120
@@ -136,7 +138,7 @@ export default function PurchaseOrdersPage() {
   return (
     <>
       <AppHeader title="Purchase Orders">
-        <Link to="/purchase-orders/new"> {/* Use Link from react-router-dom */}
+        <Link to="/Newpurchaseorder"> {/* Use Link from react-router-dom */}
           <Button>
             <PlusCircle className="mr-2 h-4 w-4" /> Create Purchase Order
           </Button>
@@ -153,7 +155,7 @@ export default function PurchaseOrdersPage() {
                 <PackageOpen className="w-16 h-16 text-muted-foreground mb-4" />
                 <h2 className="text-xl font-semibold mb-2">No Purchase Orders Yet</h2>
                 <p className="text-muted-foreground">Create your first purchase order </p>
-                <Link to="/purchase-orders/new" className="mt-4"> {/* Use Link from react-router-dom */}
+                <Link to="/Newpurchaseorder" className="mt-4"> {/* Use Link from react-router-dom */}
                   <Button><PlusCircle className="mr-2 h-4 w-4" /> Create Purchase Order</Button>
                 </Link>
               </div>
@@ -161,7 +163,7 @@ export default function PurchaseOrdersPage() {
               <DataTable
                 columns={columns}
                 data={purchaseOrders}
-                onRowClick={(row) => navigate(`/purchase-orders/${row.id}`)} // Navigate to the edit/view page
+                onRowClick={(row) => navigate(`Editpurchaseorder/${row.id}/edit`)} // Navigate to the edit/view page
                 noResultsMessage="No purchase orders found."
               />
             )}

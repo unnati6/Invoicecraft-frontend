@@ -41,6 +41,10 @@ import NewInvoicePage from './page/invoice/Newinvoice/page';
 import { InvoiceForm } from './components/invoice-form';
 import EditInvoicePage from './page/invoice/Editinvoice/page';
 import PurchaseOrdersPage from './page/purchase-order/Purchaseorder';
+import { PurchaseOrderForm } from './components/purchase-order-form';
+import NewPurchaseOrderPage from './page/purchase-order/Newpurchaseorder/page';
+import ViewEditPurchaseOrderPage from './page/purchase-order/Editpurchaseorder/page';
+import SelectDocumentForSignaturePage from './page/e-signature/select-document/page';
 
 function App() {
 
@@ -86,6 +90,10 @@ function App() {
       <Route path='/invoice-form' element={<ProtectedRoute><InvoiceForm /></ProtectedRoute>}/>
       <Route path='/Editinvoice/:id/edit' element={<ProtectedRoute><EditInvoicePage /></ProtectedRoute>}/>
       <Route path='/purchaseorder' element={<ProtectedRoute><PurchaseOrdersPage /></ProtectedRoute>}/>
+      <Route path='/purchaseorder-form' element={<ProtectedRoute><PurchaseOrderForm /></ProtectedRoute>}/>
+      <Route path='/Newpurchaseorder' element={<ProtectedRoute><NewPurchaseOrderPage /></ProtectedRoute>}/>
+      <Route path='/Editpurchaseorder/:id/edit'element={<ProtectedRoute><ViewEditPurchaseOrderPage /></ProtectedRoute>}/>
+      <Route path='/e-signature' element={<ProtectedRoute><SelectDocumentForSignaturePage /></ProtectedRoute>}/>
     </Route>
     </Routes>
 </Router>
